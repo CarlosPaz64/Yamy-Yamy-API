@@ -6,14 +6,15 @@ export const verifyAdminToken = (req: Request, res: Response, next: NextFunction
 
   if (!token) {
     res.status(401).json({ message: 'No token provided' });
-    return;
+    return; // Asegúrate de detener la ejecución aquí
   }
 
   try {
     const decoded = jwt.verify(token, 'your-jwt-secret') as { adminId: string };
-    req.adminId = decoded.adminId; // Esto debería funcionar si el tipo está correctamente extendido
-    next(); // Llamamos a next si todo está bien
+    res.locals.adminId = decoded.adminId; // Usamos res.locals para almacenar el adminId
+    next(); // Continua el flujo si el token es válido
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' });
+    return; // Detenemos la ejecución
   }
 };
