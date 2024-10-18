@@ -6,7 +6,7 @@ export class CarruselController {
   static async obtenerImagenes(req: Request, res: Response): Promise<void> {
     try {
       const imagenes = await Carrusel1Model.obtenerImagenes();
-      res.status(200).json(imagenes);  // No retornamos la respuesta
+      res.status(200).json(imagenes);
     } catch (error) {
       res.status(500).json({ message: 'Error al obtener las imágenes del carrusel' });
     }
@@ -15,7 +15,7 @@ export class CarruselController {
   // Subir una imagen al carrusel (requiere token de administrador)
   static async subirImagen(req: Request, res: Response): Promise<void> {
     const { imagen, nombreImagen } = req.body;
-    const adminId = req.adminId; // Obtenemos el ID del administrador a partir del middleware
+    const adminId = res.locals.adminId; // Obtenemos el ID del administrador desde res.locals
 
     if (!imagen || !nombreImagen) {
       res.status(400).json({ message: 'La imagen y el nombre de la imagen son requeridos' });
@@ -34,7 +34,7 @@ export class CarruselController {
   // Eliminar una imagen del carrusel por ID (requiere token de administrador)
   static async eliminarImagen(req: Request, res: Response): Promise<void> {
     const { idImagen } = req.params;
-    const adminId = req.adminId; // Obtenemos el ID del administrador a partir del middleware
+    const adminId = res.locals.adminId; // Obtenemos el ID del administrador desde res.locals
 
     try {
       console.log(`Admin con ID: ${adminId} está eliminando la imagen con ID: ${idImagen}`);
