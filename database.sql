@@ -72,5 +72,16 @@ CREATE TABLE IF NOT EXISTS producto_personalizado (
     FOREIGN KEY (orden_id) REFERENCES orden(orden_id)
 );
 
+-- Creación de la tabla para el primer carrusel de imágenes
+CREATE TABLE IF NOT EXISTS carrusel_1 (
+    idImagen INT AUTO_INCREMENT PRIMARY KEY, 
+    imagen LONGBLOB NOT NULL,  -- Almacena la imagen en base64
+    nombreImagen VARCHAR(255) -- Nombre del archivo (opcional)
+);
+
+-- Valores de ejemplo para el loggin del admnistrador
+INSERT INTO administrador (username, password_admin, email)
+VALUES ('admin123', 'passwordSegura123', 'admin@example.com');
+
 -- DROP DATABASE YM;
 -- afredo aescobar
