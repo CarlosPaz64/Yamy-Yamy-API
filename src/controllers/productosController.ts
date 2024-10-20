@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
 import { ProductoService } from '../services/productosServices';
+import sharp from 'sharp'; // Importa sharp
 
 export class ProductoController {
   // Controlador para obtener todos los productos
   static async obtenerProductos(req: Request, res: Response): Promise<void> {
     try {
       const productos = await ProductoService.obtenerProductos();
-
-      // Las imágenes ya están en base64, no es necesario convertirlas
       res.json(productos); // Envía la respuesta con los productos
     } catch (error) {
       console.error('Error al obtener productos:', error);
@@ -26,8 +25,14 @@ export class ProductoController {
         return;
       }
 
-      // Convertir la imagen subida a base64
-      const base64Imagen = req.file.buffer.toString('base64');
+      // Comprimir la imagen usando sharp
+      const compressedBuffer = await sharp(req.file.buffer)
+        .resize(800) // Cambia el tamaño máximo a 800px
+        .jpeg({ quality: 60 }) // Comprimir la imagen con calidad 60
+        .toBuffer();
+
+      // Convertir la imagen comprimida a base64
+      const base64Imagen = compressedBuffer.toString('base64');
       const mimeType = req.file.mimetype;
 
       // Crear el objeto del nuevo producto
@@ -37,7 +42,7 @@ export class ProductoController {
         precio,
         categoria,
         stock,
-        url_imagen: `data:${mimeType};base64,${base64Imagen}`, // Guardar la imagen como base64
+        url_imagen: `data:${mimeType};base64,${base64Imagen}`, // Guardar la imagen comprimida como base64
       };
 
       // Crear el producto usando el servicio
@@ -57,8 +62,6 @@ export class ProductoController {
   static async obtenerProductosPorCategoria(req: Request, res: Response): Promise<void> {
     try {
       const productos = await ProductoService.obtenerProductosPorCategoria();
-
-      // Las imágenes ya están en base64, no es necesario convertirlas
       res.status(200).json(productos);
     } catch (error) {
       console.error('Error al obtener productos por categoría:', error);
