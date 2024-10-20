@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS producto (
     precio DECIMAL(10, 2) NOT NULL,
     categoria ENUM('Cupcake', 'Cupcake personalizado', 'Pastel', 'Pastel personalizado', 'Brownies', 'Postre', 'Postre personalizado', 'Crepas', 'Roles', 'Galleta', 'Galleta personalizada', 'Producto de temporada') NOT NULL,
     stock INT NOT NULL,
-    url_imagen VARCHAR(255),
+    url_imagen LONGBLOB,
     epoca VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
