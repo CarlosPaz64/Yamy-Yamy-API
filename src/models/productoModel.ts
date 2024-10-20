@@ -1,7 +1,7 @@
 import { db } from '../database/database';
 
-export interface Producto {
-  product_id: number;
+// Definir un nuevo tipo para productos que están siendo creados (sin product_id)
+export interface NuevoProducto {
   nombre_producto: string;
   descripcion_producto: string;
   precio: number;
@@ -11,19 +11,67 @@ export interface Producto {
   epoca?: string;
 }
 
+export interface Producto extends NuevoProducto {
+  product_id: number; // Solo se añade en la base de datos
+}
+
 export class ProductoModel {
   // Obtener todos los productos
   static async obtenerTodos(): Promise<Producto[]> {
-    const [rows] = await db.query('SELECT * FROM producto');
-    return rows as Producto[];
+    const [rows]: any[] = await db.query('SELECT * FROM producto'); 
+
+    // Convertir Buffer a base64 si es necesario
+    const productos = rows.map((producto: any) => {
+      if (producto.url_imagen && Buffer.isBuffer(producto.url_imagen)) {
+        // Convertir Buffer a cadena base64 y agregar el prefijo MIME
+        producto.url_imagen = `data:image/png;base64,${producto.url_imagen.toString('base64')}`;
+      }
+      return producto;
+    });
+
+    return productos as Producto[];
   }
 
-  // Crear un nuevo producto
-  static async crearProducto(producto: Producto): Promise<void> {
+  // Crear un nuevo producto (sin product_id)
+  static async crearProducto(producto: NuevoProducto): Promise<void> {
     const { nombre_producto, descripcion_producto, precio, categoria, stock, url_imagen, epoca } = producto;
     await db.query(
       'INSERT INTO producto (nombre_producto, descripcion_producto, precio, categoria, stock, url_imagen, epoca) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [nombre_producto, descripcion_producto, precio, categoria, stock, url_imagen, epoca]
     );
+  }
+
+  // Obtener todos los productos ordenados por categoría
+  static async obtenerTodosOrdenadosPorCategoria(): Promise<Producto[]> {
+    const query = `
+      SELECT * FROM producto 
+      ORDER BY FIELD(categoria, 
+        'Cupcake', 
+        'Cupcake personalizado', 
+        'Pastel', 
+        'Pastel personalizado', 
+        'Brownies', 
+        'Postre', 
+        'Postre personalizado', 
+        'Crepas', 
+        'Roles', 
+        'Galleta', 
+        'Galleta personalizada', 
+        'Producto de temporada'
+      )
+    `;
+
+    const [rows]: any[] = await db.query(query);
+
+    // Convertir Buffer a base64 si es necesario
+    const productos = rows.map((producto: any) => {
+      if (producto.url_imagen && Buffer.isBuffer(producto.url_imagen)) {
+        // Convertir Buffer a base64 y agregar el prefijo MIME
+        producto.url_imagen = `data:image/png;base64,${producto.url_imagen.toString('base64')}`;
+      }
+      return producto;
+    });
+
+    return productos as Producto[];
   }
 }

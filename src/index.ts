@@ -4,6 +4,7 @@ import { verificarConexion } from './database/database';  // Asegúrate de impor
 import productosRoutes from './routes/productosRoute';  // Importar las rutas de productos
 import adminRoutes from './routes/adminRoutes'; // Importa las rutas del administrador
 import hashearContraseñasAdmin from './adminPassword/hashPassword'; // Importa el script de hasheo
+
 const cors = require('cors');
 
 
@@ -19,8 +20,9 @@ app.use(cors());
   await hashearContraseñasAdmin(); // Asegúrate de esperar a que termine de ejecutar
 })();
 
-// Middleware para permitir que Express maneje JSON
-app.use(express.json());
+// Aumentar el límite de tamaño para las solicitudes JSON y URL-encoded
+app.use(express.json({ limit: '10mb' })); // Aumenta el límite según sea necesario
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Definir una ruta de prueba
 app.get('/', (req, res) => {
