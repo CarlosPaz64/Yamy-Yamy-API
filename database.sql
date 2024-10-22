@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS cliente (
     nombre_cliente VARCHAR(50) NOT NULL,
     apellido_cliente VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
+    password_cliente VARCHAR(255) NOT NULL,
     numero_telefono VARCHAR(20),
     calle VARCHAR(255) NOT NULL, -- Calle del cliente
     numero_exterior VARCHAR(10) NOT NULL, -- Número exterior de la dirección
@@ -79,9 +80,24 @@ CREATE TABLE IF NOT EXISTS carrusel_1 (
     nombreImagen VARCHAR(255) -- Nombre del archivo (opcional)
 );
 
--- Valores de ejemplo para el loggin del admnistrador
-INSERT INTO administrador (username, password_admin, email)
-VALUES ('admin123', 'passwordSegura123', 'admin@example.com');
+-- Valores de ejemplo para el loggin del cliente
+-- Valores de ejemplo para el cliente
+INSERT INTO cliente (
+    nombre_cliente, 
+    apellido_cliente, 
+    email, 
+    password_cliente, 
+    numero_telefono, 
+    calle, 
+    numero_exterior, 
+    numero_interior, 
+    colonia, 
+    ciudad, 
+    codigo_postal
+) 
+VALUES 
+('Pablo', 'Hernández', 'pablo.hernandez@example.com', 'adta123', '555-111-2222', 'Calle Central', '101', NULL, 'Centro', 'Ciudad de México', '10000');
+
 
 -- DROP DATABASE YM;
 -- afredo aescobar

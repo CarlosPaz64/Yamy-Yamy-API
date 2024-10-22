@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { verificarConexion } from './database/database';  // Asegúrate de importar la función de conexión
 import productosRoutes from './routes/productosRoute';  // Importar las rutas de productos
-import adminRoutes from './routes/adminRoutes'; // Importa las rutas del administrador
+import ClienteRoutes from './routes/ClienteRoutes'; // Importa las rutas del administrador
 import hashearContraseñasAdmin from './adminPassword/hashPassword'; // Importa el script de hasheo
 
 const cors = require('cors');
@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 // Registrar las rutas de productos
 app.use('/api/productos', productosRoutes);  // Ruta para los productos
 // Usar las rutas de administrador en el prefijo /api/admin
-app.use('/api/admin', adminRoutes);
+app.use('/api/cliente', ClienteRoutes);
 
 // Verificar la conexión a la base de datos al iniciar el servidor
 verificarConexion();  // Llamar a la función para verificar la conexión

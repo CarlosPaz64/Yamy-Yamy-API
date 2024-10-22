@@ -18,3 +18,4 @@ export const verifyAdminToken = (req: Request, res: Response, next: NextFunction
     return; // Detenemos la ejecución
   }
 };
+ 

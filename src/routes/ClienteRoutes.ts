@@ -1,15 +1,14 @@
 import { Router } from 'express';
-import { AdministradorController } from '../controllers/adminController';
-import { verifyAdminToken } from '../middlewares/verifyAdminToken'
+import { ClienteController } from '../controllers/ClienteController'; // Cambia 'AdministradorController' a 'ClienteController'
+import { verifyAdminToken } from '../middlewares/verifyAdminToken';
 import { CarruselController } from '../controllers/carrusel1Controller';
-
 
 const router = Router();
 
-// Ruta para el login del administrador
-router.post('/login', AdministradorController.login);
+// Ruta para el login del cliente
+router.post('/login', ClienteController.login); // Usa ClienteController en lugar de AdministradorController
 
-// Ruta par obtener todas las imágebes del carrusel
+// Ruta para obtener todas las imágenes del carrusel
 router.get('/carrusel1', CarruselController.obtenerImagenes);
 
 // Rutas protegidas por el middleware para subir y eliminar imágenes (solo accesibles para administradores)
