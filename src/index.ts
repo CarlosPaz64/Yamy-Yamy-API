@@ -5,6 +5,7 @@ import productosRoutes from './routes/productosRoute';  // Importar las rutas de
 import adminRoutes from './routes/adminRoutes'; // Importa las rutas del administrador
 import hashearContraseñasAdmin from './adminPassword/hashPassword'; // Importa el script de hasheo
 import userRoutes from './routes/userRoutes';
+import zipCodeRoute from './routes/zipCodeRoute'; // Importa la ruta de los codigos postales
 
 const cors = require('cors');
 
@@ -36,6 +37,8 @@ app.use('/api/productos', productosRoutes);  // Ruta para los productos
 app.use('/api/admin', adminRoutes);
 // Utilizar las rutas del cliente
 app.use('/api/users', userRoutes);
+// Ruta para los codigos postales
+app.use('/api', zipCodeRoute); // Ruta para los codigos postales
 
 // Verificar la conexión a la base de datos al iniciar el servidor
 verificarConexion();  // Llamar a la función para verificar la conexión
