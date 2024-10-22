@@ -4,6 +4,7 @@ import { verificarConexion } from './database/database';  // Asegúrate de impor
 import productosRoutes from './routes/productosRoute';  // Importar las rutas de productos
 import adminRoutes from './routes/adminRoutes'; // Importa las rutas del administrador
 import hashearContraseñasAdmin from './adminPassword/hashPassword'; // Importa el script de hasheo
+import userRoutes from './routes/userRoutes';
 
 const cors = require('cors');
 
@@ -33,6 +34,8 @@ app.get('/', (req, res) => {
 app.use('/api/productos', productosRoutes);  // Ruta para los productos
 // Usar las rutas de administrador en el prefijo /api/admin
 app.use('/api/admin', adminRoutes);
+// Utilizar las rutas del cliente
+app.use('/api/users', userRoutes);
 
 // Verificar la conexión a la base de datos al iniciar el servidor
 verificarConexion();  // Llamar a la función para verificar la conexión
