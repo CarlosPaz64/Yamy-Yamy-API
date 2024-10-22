@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS cliente (
     nombre_cliente VARCHAR(50) NOT NULL,
     apellido_cliente VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
+    password_cliente VARCHAR(100) NOT NULL,
     numero_telefono VARCHAR(20),
     calle VARCHAR(255) NOT NULL, -- Calle del cliente
     numero_exterior VARCHAR(10) NOT NULL, -- Número exterior de la dirección
