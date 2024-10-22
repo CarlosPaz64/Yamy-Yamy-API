@@ -33,7 +33,7 @@ export class RegisterService {
       const decryptedData = this.desencriptarDatos(encryptedData);
 
       // Parseamos los datos desencriptados como JSON
-      const { nombre_cliente, apellido_cliente, email, password_cliente, numero_telefono, calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal } = JSON.parse(decryptedData);
+      const { nombre_cliente, apellido_cliente, email, password_cliente, numero_telefono, calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, descripcion } = JSON.parse(decryptedData);
 
       // Hashear la contraseña con bcrypt
       const hashedPassword = await bcrypt.hash(password_cliente, 10); // 10 es el número de salt rounds
@@ -50,7 +50,8 @@ export class RegisterService {
         numero_interior,
         colonia,
         ciudad,
-        codigo_postal
+        codigo_postal, 
+        descripcion
         // Puedes almacenar hashedPassword si planeas guardarla
       };
 
