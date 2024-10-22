@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS cliente (
     colonia VARCHAR(100) NOT NULL, -- Colonia del cliente
     ciudad VARCHAR(100) NOT NULL, -- Ciudad
     codigo_postal VARCHAR(10) NOT NULL, -- Código postal
+    descripcion VARCHAR(100) NOT NULL, -- Descripción de la ubicación del cliente
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

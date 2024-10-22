@@ -14,14 +14,15 @@ export interface Cliente {
     colonia: string;
     ciudad: string;
     codigo_postal: string;
+    descripcion: string;
 }
 
 export const registerCliente = async (cliente: Cliente): Promise<number> => {
     const query = `
         INSERT INTO cliente (
             nombre_cliente, apellido_cliente, email, password_cliente, numero_telefono, 
-            calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, descripcion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -35,7 +36,8 @@ export const registerCliente = async (cliente: Cliente): Promise<number> => {
         cliente.numero_interior || null,
         cliente.colonia,
         cliente.ciudad,
-        cliente.codigo_postal
+        cliente.codigo_postal,
+        cliente.descripcion
     ];
 
     const [result] = await db.query<ResultSetHeader>(query, values);
