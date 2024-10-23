@@ -1,3 +1,4 @@
+import { db } from '../database/database';
 import bcrypt from 'bcrypt';
 import CryptoJS from 'crypto-js';
 import { registerCliente } from '../models/registerModel';
@@ -6,7 +7,7 @@ import { Cliente } from '../models/registerModel';
 const SECRET_KEY = 'tu_clave_secreta'; // Define tu clave secreta
 
 export class RegisterService {
-  
+
   static desencriptarDatos(encryptedData: string): string {
     try {
       const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY, {
@@ -28,7 +29,12 @@ export class RegisterService {
   }
 
   static async registerUser(encryptedData: string): Promise<number> {
+    const connection = await db.getConnection(); // Obtén la conexión a la base de datos
+
     try {
+      // Inicia una transacción
+      await connection.beginTransaction();
+
       // Desencriptamos los datos que llegan del frontend
       const decryptedData = this.desencriptarDatos(encryptedData);
 
@@ -52,16 +58,27 @@ export class RegisterService {
         ciudad,
         codigo_postal, 
         descripcion
-        // Puedes almacenar hashedPassword si planeas guardarla
       };
 
       // Llamamos a la función del modelo para registrar al cliente
       const clientId = await registerCliente(newCliente);
 
+      if (clientId === null) {
+        throw new Error('Error al registrar el cliente.');
+      }
+
+      // Confirma la transacción (commit)
+      await connection.commit();
+
       return clientId;
     } catch (error) {
       console.error('Error al registrar al usuario:', error);
+      // Si ocurre un error, realiza rollback para revertir los cambios
+      await connection.rollback();
       throw error;
+    } finally {
+      // Libera la conexión de vuelta al pool
+      connection.release();
     }
   }
 }
