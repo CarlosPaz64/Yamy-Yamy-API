@@ -17,7 +17,7 @@ export class ProductoController {
   // Controlador para crear un nuevo producto
   static async crearProducto(req: Request, res: Response): Promise<void> {
     try {
-      const { nombre_producto, descripcion_producto, precio, categoria, stock } = req.body;
+      const { nombre_producto, descripcion_producto, precio, categoria, stock, epoca } = req.body;
   
       // Verificar si Multer subió una imagen
       if (!req.file) {
@@ -38,7 +38,8 @@ export class ProductoController {
         precio,
         categoria,
         stock,
-        url_imagen: compressedBuffer, // Guardar el Buffer directamente en la base de datos
+        url_imagen: compressedBuffer, 
+        epoca,// Guardar el Buffer directamente en la base de datos
       };
   
       // Crear el producto usando el servicio
