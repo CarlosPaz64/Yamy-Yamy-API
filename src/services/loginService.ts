@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { getClienteByEmail } from '../models/loginModel';
 
 export class LoginService {
-  static async loginUser(email: string, password: string): Promise<boolean> {
+  static async loginUser(email: string, password: string): Promise<{ id: number }> {
     const cliente = await getClienteByEmail(email);
 
     if (!cliente) {
@@ -16,6 +16,7 @@ export class LoginService {
       throw new Error('Contraseña incorrecta');
     }
 
-    return true; // Login exitoso
+    // Retorna el `client_id` en lugar de un booleano
+    return { id: cliente.client_id! }; // Asumimos que `client_id` es siempre válido si el cliente existe
   }
 }
