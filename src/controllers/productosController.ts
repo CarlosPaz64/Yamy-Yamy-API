@@ -17,34 +17,31 @@ export class ProductoController {
   // Controlador para crear un nuevo producto
   static async crearProducto(req: Request, res: Response): Promise<void> {
     try {
-      const { nombre_producto, descripcion_producto, precio, categoria, stock } = req.body;
-
+      const { nombre_producto, descripcion_producto, precio, categoria, stock, epoca } = req.body;
+  
       // Verificar si Multer subió una imagen
       if (!req.file) {
         res.status(400).json({ error: 'No se ha subido ninguna imagen.' });
         return;
       }
-
+  
       // Comprimir la imagen usando sharp
       const compressedBuffer = await sharp(req.file.buffer)
         .resize(800) // Cambia el tamaño máximo a 800px
         .jpeg({ quality: 60 }) // Comprimir la imagen con calidad 60
         .toBuffer();
-
-      // Convertir la imagen comprimida a base64
-      const base64Imagen = compressedBuffer.toString('base64');
-      const mimeType = req.file.mimetype;
-
-      // Crear el objeto del nuevo producto
+  
+      // Crear el objeto del nuevo producto con el Buffer, no en base64
       const nuevoProducto = {
         nombre_producto,
         descripcion_producto,
         precio,
         categoria,
         stock,
-        url_imagen: `data:${mimeType};base64,${base64Imagen}`, // Guardar la imagen comprimida como base64
+        url_imagen: compressedBuffer, 
+        epoca,// Guardar el Buffer directamente en la base de datos
       };
-
+  
       // Crear el producto usando el servicio
       await ProductoService.crearProducto(nuevoProducto);
       res.status(201).json({ message: 'Producto creado' });
@@ -57,6 +54,7 @@ export class ProductoController {
       });
     }
   }
+  
 
   // Controlador para obtener productos ordenados por categorías
   static async obtenerProductosPorCategoria(req: Request, res: Response): Promise<void> {
