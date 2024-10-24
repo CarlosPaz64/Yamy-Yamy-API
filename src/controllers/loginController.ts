@@ -42,7 +42,7 @@ export class LoginController {
       // Responder con el token y el ID del usuario
       res.status(200).json({ token, userId: user.id, message: 'Inicio de sesión exitoso' });
     } catch (error) {
-      // Manejo de errores
+
       if (error instanceof Error) {
         console.error('Error en el inicio de sesión:', error.message);
         res.status(401).json({ message: error.message || 'Error en el inicio de sesión' });
