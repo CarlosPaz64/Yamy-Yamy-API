@@ -16,7 +16,7 @@ export class LoginController {
 
       res.status(200).json({ message: 'Inicio de sesión exitoso' });
     } catch (error) {
-      // Verificar si el error es de tipo Error antes de usar sus propiedades
+      // Verifica si el error es de tipo Error antes de usar sus propiedades
       if (error instanceof Error) {
         console.error('Error en el inicio de sesión:', error.message);
         res.status(401).json({ message: error.message || 'Error en el inicio de sesión' });
