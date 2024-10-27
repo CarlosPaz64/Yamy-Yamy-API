@@ -23,7 +23,7 @@ export class AdministradorController {
       // Enviar el token y los datos del administrador en la respuesta
       res.status(200).json({ message: 'Autenticación exitosa', token, admin });
     } catch (error) {
-      res.status(500).json({ message: (error instanceof Error ? error.message : 'Error desconocido al autenticar el administrador') });
+      res.status(500).json({ message: (error instanceof Error ? error.message : 'Error desconocido al autenticar el administradores') });
     }
   }
 }
