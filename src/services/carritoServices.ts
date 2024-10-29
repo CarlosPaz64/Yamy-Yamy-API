@@ -10,12 +10,25 @@ class CarritoService {
   }
 
   // Añadir o actualizar un producto en el carrito
-  async addOrUpdateProductInCarrito(carrito_id: number, product_id: number, cantidad: number): Promise<void> {
+  async addOrUpdateProductInCarrito(client_id: number, product_id: number, cantidad: number, token: string): Promise<void> {
+    let carrito = await carritoModel.getCarritoByClientId(client_id);
+    
+    // Si el carrito no existe, lo creamos y obtenemos su carrito_id
+    if (!carrito) {
+      const carrito_id = await this.createCarritoForClient(client_id, token);
+      carrito = { carrito_id, client_id, token };
+    }
+
     const producto = await ProductoModel.getProductById(product_id);
     if (!producto) throw new Error('Producto no encontrado');
     if (producto.stock < cantidad) throw new Error('Stock insuficiente');
 
-    await carritoProductoModel.addOrUpdateProductInCarrito({ carrito_id, product_id, cantidad });
+    // Añadir o actualizar el producto en el carrito
+    await carritoProductoModel.addOrUpdateProductInCarrito({
+      carrito_id: carrito.carrito_id as number,
+      product_id,
+      cantidad,
+    });
   }
 
   // Obtener el contenido de un carrito específico

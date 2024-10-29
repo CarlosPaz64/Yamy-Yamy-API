@@ -18,10 +18,10 @@ class CarritoController {
 
   // Agregar o actualizar un producto en el carrito
   async addOrUpdateProduct(req: Request, res: Response): Promise<void> {
-    const { carrito_id, product_id, cantidad } = req.body;
+    const { carrito_id, product_id, cantidad, token } = req.body;
 
     try {
-      await carritoService.addOrUpdateProductInCarrito(carrito_id, product_id, cantidad);
+      await carritoService.addOrUpdateProductInCarrito(carrito_id, product_id, cantidad, token);
       res.status(200).json({ message: 'Producto añadido o actualizado en el carrito' });
     } catch (error) {
       console.error(error);
