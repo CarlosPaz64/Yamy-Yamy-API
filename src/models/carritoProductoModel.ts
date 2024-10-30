@@ -13,6 +13,7 @@ class CarritoProductoModel {
   async addOrUpdateProductInCarrito(carritoProducto: CarritoProducto): Promise<void> {
     const { carrito_id, product_id, cantidad } = carritoProducto;
 
+    // Verificar si el producto ya está en el carrito
     const queryCheck = `
       SELECT * FROM carrito_producto
       WHERE carrito_id = ? AND product_id = ?
@@ -21,6 +22,7 @@ class CarritoProductoModel {
     const existingProduct = (existingRows as CarritoProducto[])[0];
 
     if (existingProduct) {
+      // Si el producto ya está en el carrito, incrementa la cantidad
       const queryUpdate = `
         UPDATE carrito_producto
         SET cantidad = cantidad + ?
@@ -28,11 +30,25 @@ class CarritoProductoModel {
       `;
       await db.execute(queryUpdate, [cantidad, existingProduct.carrito_producto_id]);
     } else {
+      // Si el producto no está en el carrito, añádelo como nueva entrada
       const queryInsert = `
         INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
         VALUES (?, ?, ?)
       `;
       await db.execute(queryInsert, [carrito_id, product_id, cantidad]);
+    }
+
+    // Reducir el stock del producto en la tabla `producto`
+    const queryUpdateStock = `
+      UPDATE producto
+      SET stock = stock - ?
+      WHERE product_id = ? AND stock >= ?
+    `;
+    const [updateStockResult] = await db.execute(queryUpdateStock, [cantidad, product_id, cantidad]);
+
+    // Verificar si la actualización de stock fue exitosa
+    if ((updateStockResult as any).affectedRows === 0) {
+      throw new Error('Stock insuficiente para este producto');
     }
   }
 
