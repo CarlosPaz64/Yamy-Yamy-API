@@ -1,7 +1,7 @@
-import db from '../database/database';
+import { db } from '../database/database';
 import sharp from 'sharp';
 
-interface NuevoPedidoPersonalizado {
+export interface NuevoPedidoPersonalizado {
   client_id: number;
   token: string;
   categoria: string;
@@ -39,17 +39,19 @@ class PedidoPersonalizadoModel {
       imagen_referencia_2
     } = pedido;
 
-    // Si la opción de entrega es "domicilio", obtenemos la dirección del cliente desde la tabla "cliente"
+    // Si la opción de entrega es "domicilio", obtenemos la dirección y descripción del cliente desde la tabla "cliente"
     if (opcion_entrega === 'domicilio') {
-      const [clienteData] = await db.query(
-        `SELECT calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, numero_telefono 
+      const [rows]: any = await db.query(
+        `SELECT calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, numero_telefono, descripcion 
          FROM cliente 
          WHERE client_id = ?`,
         [client_id]
       );
 
+      const clienteData = rows[0]; // Toma el primer registro si existe
+
       if (clienteData) {
-        // Asignamos los datos de domicilio y teléfono obtenidos de la tabla "cliente"
+        // Asignamos los datos de domicilio, teléfono y descripción obtenidos de la tabla "cliente"
         calle = clienteData.calle;
         numero_exterior = clienteData.numero_exterior;
         numero_interior = clienteData.numero_interior;
@@ -57,6 +59,7 @@ class PedidoPersonalizadoModel {
         ciudad = clienteData.ciudad;
         codigo_postal = clienteData.codigo_postal;
         numero_telefono = clienteData.numero_telefono;
+        descripcion_ubicacion = clienteData.descripcion; // Asigna la descripción de ubicación
       }
     }
 
