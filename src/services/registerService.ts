@@ -28,6 +28,13 @@ export class RegisterService {
     }
   }
 
+  static encriptarDato(dato: string): string {
+    return CryptoJS.AES.encrypt(dato, SECRET_KEY, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    }).toString();
+  }
+
   static async registerUser(encryptedData: string): Promise<number> {
     const connection = await db.getConnection(); // Obtén la conexión a la base de datos
 
@@ -39,10 +46,15 @@ export class RegisterService {
       const decryptedData = this.desencriptarDatos(encryptedData);
 
       // Parseamos los datos desencriptados como JSON
-      const { nombre_cliente, apellido_cliente, email, password_cliente, numero_telefono, calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, descripcion } = JSON.parse(decryptedData);
+      const { nombre_cliente, apellido_cliente, email, password_cliente, numero_telefono, calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, descripcion, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv } = JSON.parse(decryptedData);
 
       // Hashear la contraseña con bcrypt
       const hashedPassword = await bcrypt.hash(password_cliente, 10); // 10 es el número de salt rounds
+
+      // Encriptamos el número de tarjeta, la fecha y el CVV
+      const encryptedNumeroTarjeta = this.encriptarDato(numero_tarjeta);
+      const encryptedFechaTarjeta = this.encriptarDato(fecha_tarjeta);
+      const encryptedCVV = this.encriptarDato(cvv);
 
       // Creamos el objeto Cliente con los datos recibidos
       const newCliente: Cliente = {
@@ -56,8 +68,12 @@ export class RegisterService {
         numero_interior,
         colonia,
         ciudad,
-        codigo_postal, 
-        descripcion
+        codigo_postal,
+        descripcion,
+        tipo_tarjeta,
+        numero_tarjeta: encryptedNumeroTarjeta,
+        fecha_tarjeta: encryptedFechaTarjeta,
+        cvv: encryptedCVV
       };
 
       // Llamamos a la función del modelo para registrar al cliente

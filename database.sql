@@ -1,13 +1,6 @@
 CREATE DATABASE IF NOT EXISTS YM;
 USE YM;
-
-CREATE TABLE IF NOT EXISTS administrador (
-    admin_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password_admin VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- DROP DATABASE YM;
 
 CREATE TABLE IF NOT EXISTS producto (
     product_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,13 +15,14 @@ CREATE TABLE IF NOT EXISTS producto (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 -- Mi comentarios
+-- Mi comentarios
 CREATE TABLE IF NOT EXISTS cliente (
     client_id INT AUTO_INCREMENT PRIMARY KEY,
     nombre_cliente VARCHAR(50) NOT NULL,
     apellido_cliente VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_cliente VARCHAR(100) NOT NULL,
-    numero_telefono VARCHAR(20),
+    numero_telefono VARCHAR(20) NOT NULL,
     calle VARCHAR(255) NOT NULL, -- Calle del cliente
     numero_exterior VARCHAR(10) NOT NULL, -- Número exterior de la dirección
     numero_interior VARCHAR(10), -- Número interior, opcional
@@ -36,54 +30,65 @@ CREATE TABLE IF NOT EXISTS cliente (
     ciudad VARCHAR(100) NOT NULL, -- Ciudad
     codigo_postal VARCHAR(10) NOT NULL, -- Código postal
     descripcion VARCHAR(100) NOT NULL, -- Descripción de la ubicación del cliente
+    
+    tipo_tarjeta ENUM('Visa', 'MasterCard', 'American Express') NOT NULL, -- Tipo de tarjeta de crédito
+    numero_tarjeta VARCHAR(255), -- Número de tarjeta en formato enmascarado o encriptado
+    fecha_tarjeta VARCHAR(255),
+    cvv VARCHAR(255),
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS orden (
-    orden_id INT AUTO_INCREMENT PRIMARY KEY,
-    client_id INT,
-    precio_total DECIMAL(10, 2) NOT NULL,
-    tipo_entrega ENUM('Domicilio', 'Recoger en tienda') NOT NULL,
-    direccion_entrega VARCHAR(255), -- Dirección completa para la entrega
-    fecha_orden TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado_orden ENUM('Pendiente', 'En proceso', 'Entregado', 'Cancelado') DEFAULT 'Pendiente',
-    url_imagen VARCHAR(255),
-    FOREIGN KEY (client_id) REFERENCES cliente(client_id)
+-- Nuevas tablas
+CREATE TABLE IF NOT EXISTS carrito (
+    carrito_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    token LONGTEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
 );
-
-CREATE TABLE IF NOT EXISTS detalles_orden (
-    detalles_orden_id INT AUTO_INCREMENT PRIMARY KEY,
-    orden_id INT,
-    product_id INT,
-    cantidad INT NOT NULL,
-    url_imagen VARCHAR(255),
-    precio DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (orden_id) REFERENCES orden(orden_id),
-    FOREIGN KEY (product_id) REFERENCES producto(product_id)
+-- Tabla intermediaria para los productos del carrito
+CREATE TABLE IF NOT EXISTS carrito_producto (
+    carrito_producto_id INT AUTO_INCREMENT PRIMARY KEY,
+    carrito_id INT NOT NULL,
+    product_id INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (carrito_id) REFERENCES carrito(carrito_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES producto(product_id) ON DELETE CASCADE
 );
+-- Tabla para el pedido personalizado del cliente
+CREATE TABLE IF NOT EXISTS pedido_personalizado (
+    pedido_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    token VARCHAR(255) NOT NULL, -- Token de sesión del cliente
+    categoria VARCHAR(50) NOT NULL, -- Categoría del pedido (ej. Pastel, Cupcake)
+    descripcion TEXT NOT NULL, -- Descripción del pedido personalizado
+    opcion_entrega ENUM('domicilio', 'recoger') NOT NULL, -- Opción de entrega: domicilio o recoger en tienda
 
-CREATE TABLE IF NOT EXISTS producto_personalizado (
-    producto_personalizado_id INT AUTO_INCREMENT PRIMARY KEY,
-    orden_id INT,
-    tipo_producto ENUM('Cupcake', 'Galleta', 'Pastel') NOT NULL, -- Definimos los productos personalizables
-    tamaño ENUM('Pequeño', 'Mediano', 'Grande') NOT NULL, -- Tamaño del producto personalizado
-    sabor VARCHAR(50) NOT NULL,
-    mensaje TEXT, -- Mensaje personalizado si aplica
-    decoracion TEXT, -- Detalles de la decoración personalizada
-    url_imagen VARCHAR(255),
-    FOREIGN KEY (orden_id) REFERENCES orden(orden_id)
+    -- Información de domicilio para el pedido personalizado
+    calle VARCHAR(255), -- Calle, puede estar prellenada si elige domicilio registrado
+    numero_exterior VARCHAR(10),
+    numero_interior VARCHAR(10),
+    colonia VARCHAR(100),
+    ciudad VARCHAR(100),
+    codigo_postal VARCHAR(10),
+    descripcion_ubicacion VARCHAR(100), -- Descripción específica del domicilio
+    
+    numero_telefono VARCHAR(20), -- Número de teléfono del cliente (editable)
+    
+    imagen_referencia_1 LONGBLOB, -- Primera imagen de referencia en formato base64 o URL
+    imagen_referencia_2 LONGBLOB, -- Segunda imagen de referencia en formato base64 o URL
+
+    forma_pago ENUM('Visa', 'MasterCard', 'American Express') NOT NULL, -- Método de pago
+    numero_tarjeta VARCHAR(20), -- Número de tarjeta en formato enmascarado o encriptado
+    fecha_tarjeta VARCHAR(20),
+    cvv VARCHAR(3),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Clave foránea que conecta con la tabla de clientes
+    FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
 );
-
--- Creación de la tabla para el primer carrusel de imágenes
-CREATE TABLE IF NOT EXISTS carrusel_1 (
-    idImagen INT AUTO_INCREMENT PRIMARY KEY, 
-    imagen LONGBLOB NOT NULL,  -- Almacena la imagen en base64
-    nombreImagen VARCHAR(255) -- Nombre del archivo (opcional)
-);
-
--- Valores de ejemplo para el loggin del admnistrador
-INSERT INTO administrador (username, password_admin, email)
-VALUES ('admin123', 'passwordSegura123', 'admin@example.com');
 
 CREATE TABLE IF NOT EXISTS codigos_postales(
 	id_yucatan INT AUTO_INCREMENT PRIMARY KEY,
@@ -923,5 +928,4 @@ INSERT INTO codigos_postales (codigo_postal_usuario, colonia, ciudad) VALUES
 ('97336', 'Chuburna Puerto', 'Progreso'),
 ('97336', 'Yucalpeten', 'Progreso');
 
--- DROP DATABASE YM;
 -- afredo aescobar
