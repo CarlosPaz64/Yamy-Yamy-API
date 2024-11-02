@@ -15,6 +15,10 @@ export interface Cliente {
     ciudad: string;
     codigo_postal: string;
     descripcion: string;
+    tipo_tarjeta: 'Visa' | 'MasterCard' | 'American Express'; // Tipo de tarjeta de crédito
+    numero_tarjeta: string; // Número de tarjeta en formato enmascarado o encriptado
+    fecha_tarjeta: string;
+    cvv: string;
 }
 
 export const registerCliente = async (cliente: Cliente): Promise<number | null> => {
@@ -22,8 +26,9 @@ export const registerCliente = async (cliente: Cliente): Promise<number | null> 
         const query = `
             INSERT INTO cliente (
                 nombre_cliente, apellido_cliente, email, password_cliente, numero_telefono, 
-                calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, descripcion
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, descripcion, tipo_tarjeta, numero_tarjeta,
+                fecha_tarjeta, cvv
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const values = [
@@ -38,7 +43,11 @@ export const registerCliente = async (cliente: Cliente): Promise<number | null> 
             cliente.colonia,
             cliente.ciudad,
             cliente.codigo_postal,
-            cliente.descripcion
+            cliente.descripcion,
+            cliente.tipo_tarjeta,
+            cliente.numero_tarjeta,
+            cliente.fecha_tarjeta,
+            cliente.cvv
         ];
 
         const [result] = await db.query<ResultSetHeader>(query, values);
