@@ -6,6 +6,8 @@ export interface NuevoPedidoPersonalizado {
   categoria: string;
   descripcion_orden: string;
   opcion_entrega: 'domicilio' | 'recoger';
+  precio: number;
+  cantidad: number;
   calle?: string;
   numero_exterior?: string;
   numero_interior?: string;
@@ -30,6 +32,8 @@ class PedidoPersonalizadoModel {
       token,
       categoria,
       descripcion_orden,
+      precio,
+      cantidad,
       opcion_entrega,
       calle,
       numero_exterior,
@@ -49,14 +53,14 @@ class PedidoPersonalizadoModel {
 
     await db.query(
       `INSERT INTO pedido_personalizado (
-        client_id, token, categoria, descripcion_orden, opcion_entrega,
+        client_id, token, categoria, descripcion_orden, precio, cantidad, opcion_entrega,
         calle, numero_exterior, numero_interior, colonia, ciudad,
         codigo_postal, descripcion_ubicacion, numero_telefono,
         imagen_referencia_1, imagen_referencia_2, tipo_tarjeta,
         numero_tarjeta, fecha_tarjeta, cvv
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        client_id, token, categoria, descripcion_orden, opcion_entrega,
+        client_id, token, categoria, descripcion_orden, precio, cantidad, opcion_entrega,
         calle, numero_exterior, numero_interior, colonia, ciudad,
         codigo_postal, descripcion_ubicacion, numero_telefono,
         imagen_referencia_1, imagen_referencia_2, tipo_tarjeta,
