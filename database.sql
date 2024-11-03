@@ -29,9 +29,9 @@ CREATE TABLE IF NOT EXISTS cliente (
     colonia VARCHAR(100) NOT NULL, -- Colonia del cliente
     ciudad VARCHAR(100) NOT NULL, -- Ciudad
     codigo_postal VARCHAR(10) NOT NULL, -- Código postal
-    descripcion VARCHAR(100) NOT NULL, -- Descripción de la ubicación del cliente
+    descripcion_ubicacion VARCHAR(100) NOT NULL, -- Descripción de la ubicación del cliente
     
-    tipo_tarjeta ENUM('Visa', 'MasterCard', 'American Express') NOT NULL, -- Tipo de tarjeta de crédito
+    tipo_tarjeta VARCHAR(255) NOT NULL, -- Tipo de tarjeta de crédito
     numero_tarjeta VARCHAR(255), -- Número de tarjeta en formato enmascarado o encriptado
     fecha_tarjeta VARCHAR(255),
     cvv VARCHAR(255),
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS pedido_personalizado (
     client_id INT NOT NULL,
     token VARCHAR(255) NOT NULL, -- Token de sesión del cliente
     categoria VARCHAR(50) NOT NULL, -- Categoría del pedido (ej. Pastel, Cupcake)
-    descripcion TEXT NOT NULL, -- Descripción del pedido personalizado
+    descripcion_orden TEXT NOT NULL, -- Descripción del pedido personalizado
     opcion_entrega ENUM('domicilio', 'recoger') NOT NULL, -- Opción de entrega: domicilio o recoger en tienda
 
     -- Información de domicilio para el pedido personalizado
@@ -79,10 +79,10 @@ CREATE TABLE IF NOT EXISTS pedido_personalizado (
     imagen_referencia_1 LONGBLOB, -- Primera imagen de referencia en formato base64 o URL
     imagen_referencia_2 LONGBLOB, -- Segunda imagen de referencia en formato base64 o URL
 
-    forma_pago ENUM('Visa', 'MasterCard', 'American Express') NOT NULL, -- Método de pago
-    numero_tarjeta VARCHAR(20), -- Número de tarjeta en formato enmascarado o encriptado
-    fecha_tarjeta VARCHAR(20),
-    cvv VARCHAR(3),
+    tipo_tarjeta VARCHAR(255) NOT NULL, -- Método de pago
+    numero_tarjeta VARCHAR(255) NOT NULL, -- Número de tarjeta en formato enmascarado o encriptado
+    fecha_tarjeta VARCHAR(255) NOT NULL,
+    cvv VARCHAR(255) NOT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
