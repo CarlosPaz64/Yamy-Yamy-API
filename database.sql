@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS pedido_personalizado (
     token VARCHAR(255) NOT NULL, -- Token de sesión del cliente
     categoria VARCHAR(50) NOT NULL, -- Categoría del pedido (ej. Pastel, Cupcake)
     descripcion_orden TEXT NOT NULL, -- Descripción del pedido personalizado
+    precio DECIMAL(10, 2) NOT NULL, -- Precio total o unitario, en formato decimal
+    cantidad INT NOT NULL DEFAULT 1, -- Cantidad de artículos en el pedido
     opcion_entrega ENUM('domicilio', 'recoger') NOT NULL, -- Opción de entrega: domicilio o recoger en tienda
 
     -- Información de domicilio para el pedido personalizado
