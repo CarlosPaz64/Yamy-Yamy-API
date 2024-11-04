@@ -6,6 +6,8 @@ import adminRoutes from './routes/adminRoutes'; // Importa las rutas del adminis
 import hashearContraseñasAdmin from './adminPassword/hashPassword'; // Importa el script de hasheo
 import userRoutes from './routes/userRoutes';
 import zipCodeRoute from './routes/zipCodeRoute'; // Importa la ruta de los codigos postales
+import path from 'path'; /* necesario para manipular rutas de archivos y directorios de una manera más segura 
+y compartible con el sistema, se utiliza principalmente para acceder a las imagenes de la web mediante una URL*/
 
 const cors = require('cors');
 
@@ -39,6 +41,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 // Ruta para los codigos postales
 app.use('/api', zipCodeRoute); // Ruta para los codigos postales
+app.use('/assets', express.static(path.join(__dirname, 'assets'))); //Ruta para consultar las imagenes/recursos en URL para la web
 
 // Verificar la conexión a la base de datos al iniciar el servidor
 verificarConexion();  // Llamar a la función para verificar la conexión
