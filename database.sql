@@ -43,27 +43,15 @@ CREATE TABLE IF NOT EXISTS carrito (
     carrito_id INT AUTO_INCREMENT PRIMARY KEY,
     client_id INT NOT NULL,
     token LONGTEXT NOT NULL,
+    tipo_tarjeta VARCHAR(255) NOT NULL, -- Tipo de tarjeta (Visa, MasterCard, etc.)
+    numero_tarjeta VARCHAR(255) NOT NULL, -- Número de tarjeta enmascarado o encriptado
+    fecha_tarjeta VARCHAR(255) NOT NULL,  -- Fecha de expiración de la tarjeta
+    cvv VARCHAR(255) NOT NULL,            -- CVV en formato encriptado
+    precio_total DECIMAL(10, 2) NOT NULL, -- Precio total del carrito
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
-);
--- Tabla intermediaria para los productos del carrito
-CREATE TABLE IF NOT EXISTS carrito_producto (
-    carrito_producto_id INT AUTO_INCREMENT PRIMARY KEY,
-    carrito_id INT NOT NULL,
-    product_id INT NOT NULL,
-    cantidad INT NOT NULL DEFAULT 1,
-    FOREIGN KEY (carrito_id) REFERENCES carrito(carrito_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES producto(product_id) ON DELETE CASCADE
 );
 
--- Nuevas tablas
-CREATE TABLE IF NOT EXISTS carrito (
-    carrito_id INT AUTO_INCREMENT PRIMARY KEY,
-    client_id INT NOT NULL,
-    token LONGTEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
-);
 -- Tabla intermediaria para los productos del carrito
 CREATE TABLE IF NOT EXISTS carrito_producto (
     carrito_producto_id INT AUTO_INCREMENT PRIMARY KEY,
