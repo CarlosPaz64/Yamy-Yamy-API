@@ -43,6 +43,20 @@ CREATE TABLE IF NOT EXISTS carrito (
     carrito_id INT AUTO_INCREMENT PRIMARY KEY,
     client_id INT NOT NULL,
     token LONGTEXT NOT NULL,
+    opcion_entrega ENUM('domicilio', 'recoger') NOT NULL, -- Opción de entrega: domicilio o recoger en tienda
+
+
+    -- Información de domicilio para el pedido personalizado
+    calle VARCHAR(255), -- Calle, puede estar prellenada si elige domicilio registrado
+    numero_exterior VARCHAR(10),
+    numero_interior VARCHAR(10),
+    colonia VARCHAR(100),
+    ciudad VARCHAR(100),
+    codigo_postal VARCHAR(10),
+    descripcion_ubicacion VARCHAR(100), -- Descripción específica del domicilio
+    
+    numero_telefono VARCHAR(20), -- Número de teléfono del cliente (editable)
+    
     tipo_tarjeta VARCHAR(255) NOT NULL, -- Tipo de tarjeta (Visa, MasterCard, etc.)
     numero_tarjeta VARCHAR(255) NOT NULL, -- Número de tarjeta enmascarado o encriptado
     fecha_tarjeta VARCHAR(255) NOT NULL,  -- Fecha de expiración de la tarjeta
