@@ -6,6 +6,7 @@ import adminRoutes from './routes/adminRoutes'; // Importa las rutas del adminis
 import hashearContraseñasAdmin from './adminPassword/hashPassword'; // Importa el script de hasheo
 import userRoutes from './routes/userRoutes';
 import zipCodeRoute from './routes/zipCodeRoute'; // Importa la ruta de los codigos postales
+import carritoRoutes from './routes/carritoRoutes'; // Importación de las rutas del carrito
 import pedidoPersonalizadoRoute from './routes/pedidoPersonalizadoRoute';
 
 const cors = require('cors');
@@ -40,6 +41,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 // Ruta para los codigos postales
 app.use('/api', zipCodeRoute); // Ruta para los codigos postales
+// Rutas del carrito de compras
+app.use('/api/carrito', carritoRoutes);
 // Ruta para el pedido personalizado
 app.use('/api', pedidoPersonalizadoRoute); // Usa el prefijo /api
 

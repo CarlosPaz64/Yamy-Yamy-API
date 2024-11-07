@@ -38,6 +38,23 @@ CREATE TABLE IF NOT EXISTS cliente (
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- Nuevas tablas
+CREATE TABLE IF NOT EXISTS carrito (
+    carrito_id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    token LONGTEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
+);
+-- Tabla intermediaria para los productos del carrito
+CREATE TABLE IF NOT EXISTS carrito_producto (
+    carrito_producto_id INT AUTO_INCREMENT PRIMARY KEY,
+    carrito_id INT NOT NULL,
+    product_id INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (carrito_id) REFERENCES carrito(carrito_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES producto(product_id) ON DELETE CASCADE
+);
 
 -- Nuevas tablas
 CREATE TABLE IF NOT EXISTS carrito (
@@ -98,6 +115,9 @@ CREATE TABLE IF NOT EXISTS codigos_postales(
     colonia VARCHAR(200),
     ciudad VARCHAR(100)
 );
+
+SELECT url_imagen FROM producto WHERE product_id = 1;
+
 
 INSERT INTO codigos_postales (codigo_postal_usuario, colonia, ciudad) VALUES
 ('97000', 'Privada García','Mérida'),
