@@ -62,14 +62,57 @@ class CarritoProductoModel {
     return rows as CarritoProducto[];
   }
 
-  // Eliminar un producto específico del carrito
-  async removeProductFromCarrito(carrito_producto_id: number): Promise<void> {
-    const query = `
+ // Reducir la cantidad de un producto específico en el carrito
+ async decrementProductQuantityInCarrito(carrito_producto_id: number, cantidad: number): Promise<void> {
+  // Obtener la cantidad actual del producto en el carrito
+  const queryGetProduct = `
+    SELECT cantidad, product_id
+    FROM carrito_producto
+    WHERE carrito_producto_id = ?
+  `;
+  const [rows] = await db.execute(queryGetProduct, [carrito_producto_id]);
+  const productInfo = (rows as { cantidad: number; product_id: number }[])[0];
+
+  if (!productInfo) {
+    throw new Error('Producto no encontrado en el carrito');
+  }
+
+  const { cantidad: cantidadActual, product_id } = productInfo;
+
+  if (cantidadActual <= cantidad) {
+    // Si la cantidad a reducir es mayor o igual a la cantidad actual, eliminar el producto
+    const queryDelete = `
       DELETE FROM carrito_producto
       WHERE carrito_producto_id = ?
     `;
-    await db.execute(query, [carrito_producto_id]);
+    await db.execute(queryDelete, [carrito_producto_id]);
+
+    // Restablecer el stock del producto
+    const queryUpdateStock = `
+      UPDATE producto
+      SET stock = stock + ?
+      WHERE product_id = ?
+    `;
+    await db.execute(queryUpdateStock, [cantidadActual, product_id]);
+  } else {
+    // Reducir la cantidad del producto en el carrito
+    const queryUpdateQuantity = `
+      UPDATE carrito_producto
+      SET cantidad = cantidad - ?
+      WHERE carrito_producto_id = ?
+    `;
+    await db.execute(queryUpdateQuantity, [cantidad, carrito_producto_id]);
+
+    // Restablecer parcialmente el stock del producto
+    const queryUpdateStockPartial = `
+      UPDATE producto
+      SET stock = stock + ?
+      WHERE product_id = ?
+    `;
+    await db.execute(queryUpdateStockPartial, [cantidad, product_id]);
   }
+}
+
 
   // Vaciar el carrito completo de un cliente
   async clearCarrito(carrito_id: number): Promise<void> {

@@ -38,7 +38,7 @@ class CarritoService {
 
   // Eliminar un producto específico del carrito
   async removeProductFromCarrito(carrito_producto_id: number): Promise<void> {
-    await carritoProductoModel.removeProductFromCarrito(carrito_producto_id);
+    await carritoProductoModel.decrementProductQuantityInCarrito(carrito_producto_id, cantidad);
   }
 
   // Vaciar el carrito completo de un cliente
