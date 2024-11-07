@@ -1,27 +1,38 @@
 // src/controllers/carritoController.ts
 import { Request, Response } from 'express';
 import { carritoService } from '../services/carritoServices';
+import CarritoModel from '../models/carritoModels';
 
 class CarritoController {
-  // Crear un nuevo carrito para el cliente
+  // Crear o obtener un carrito para el cliente
   async createCarrito(req: Request, res: Response): Promise<void> {
-    const { client_id, token } = req.body;
+    const { client_id, token, opcion_entrega, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv } = req.body;
 
     try {
-      const carritoId = await carritoService.createCarritoForClient(client_id, token);
-      res.status(201).json({ message: 'Carrito creado exitosamente', carritoId });
+      const carritoId = await carritoService.createOrGetCarrito(client_id, token);
+      
+      // Opcional: Si necesitas actualizar datos adicionales en el carrito
+      await CarritoModel.actualizarCarrito(carritoId, {
+        opcion_entrega,
+        tipo_tarjeta,
+        numero_tarjeta,
+        fecha_tarjeta,
+        cvv,
+      });
+
+      res.status(201).json({ message: 'Carrito creado o encontrado exitosamente', carritoId });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Error al crear el carrito' });
+      res.status(500).json({ message: 'Error al crear o obtener el carrito' });
     }
   }
 
   // Agregar o actualizar un producto en el carrito
   async addOrUpdateProduct(req: Request, res: Response): Promise<void> {
-    const { carrito_id, product_id, cantidad, token } = req.body;
+    const { client_id, product_id, cantidad, token } = req.body;
 
     try {
-      await carritoService.addOrUpdateProductInCarrito(carrito_id, product_id, cantidad, token);
+      await carritoService.addOrUpdateProductInCarrito(client_id, product_id, cantidad, token);
       res.status(200).json({ message: 'Producto añadido o actualizado en el carrito' });
     } catch (error) {
       console.error(error);
@@ -45,9 +56,10 @@ class CarritoController {
   // Eliminar un producto específico del carrito
   async removeProduct(req: Request, res: Response): Promise<void> {
     const { carrito_producto_id } = req.params;
+    const { cantidad } = req.body;
 
     try {
-      await carritoService.removeProductFromCarrito(Number(carrito_producto_id));
+      await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
       res.status(200).json({ message: 'Producto eliminado del carrito' });
     } catch (error) {
       console.error(error);
