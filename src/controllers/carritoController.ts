@@ -32,8 +32,8 @@ class CarritoController {
     const { client_id, product_id, cantidad, token } = req.body;
 
     try {
-      await carritoService.addOrUpdateProductInCarrito(client_id, product_id, cantidad, token);
-      res.status(200).json({ message: 'Producto añadido o actualizado en el carrito' });
+      const { carrito_producto_id } = await carritoService.addOrUpdateProductInCarrito(client_id, product_id, cantidad, token);
+      res.status(200).json({ message: 'Producto añadido o actualizado en el carrito', carrito_producto_id });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Error al agregar producto al carrito' });
@@ -60,7 +60,7 @@ class CarritoController {
 
     try {
       await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
-      res.status(200).json({ message: 'Producto eliminado del carrito' });
+      res.status(200).json({ message: 'Producto eliminado del carrito', carrito_producto_id: Number(carrito_producto_id) });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error al eliminar producto del carrito' });
@@ -73,7 +73,7 @@ class CarritoController {
 
     try {
       await carritoService.clearCarrito(Number(carrito_id));
-      res.status(200).json({ message: 'Carrito vaciado exitosamente' });
+      res.status(200).json({ message: 'Carrito vaciado exitosamente', carrito_id: Number(carrito_id) });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error al vaciar el carrito' });
