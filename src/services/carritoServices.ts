@@ -1,4 +1,3 @@
-// src/services/carritoService.ts
 import CarritoModel from '../models/carritoModels';
 import { carritoProductoModel, CarritoProducto } from '../models/carritoProductoModel';
 import { ProductoModel } from '../models/productoModel';
@@ -18,7 +17,7 @@ class CarritoService {
   }
 
   /**
-   * Crea un carrito para el cliente si no existe o lo retorna si ya existe.
+   * Crea un carrito en estado Pendiente para el cliente si no existe o retorna el carrito pendiente.
    * @param client_id ID del cliente.
    * @param token Token de autenticación.
    * @returns ID del carrito.
@@ -42,11 +41,15 @@ class CarritoService {
       return carrito_id;
     }
 
+    if (carrito.estado_pago === 'Completado') {
+      throw new Error('El cliente ya tiene un carrito finalizado.');
+    }
+
     return carrito.carrito_id!;
   }
 
   /**
-   * Añade o actualiza un producto en el carrito.
+   * Añade o actualiza un producto en un carrito en estado Pendiente.
    * @param client_id ID del cliente.
    * @param product_id ID del producto.
    * @param cantidad Cantidad del producto.
@@ -63,6 +66,7 @@ class CarritoService {
 
     const carrito_id = await this.createOrGetCarrito(client_id, token);
 
+    // Verificar existencia y stock del producto
     const producto = await ProductoModel.getProductById(product_id);
     if (!producto) {
       throw new Error('Producto no encontrado.');
@@ -74,7 +78,7 @@ class CarritoService {
 
     // Llamada al modelo que devuelve siempre un carrito_producto_id
     const result = await carritoProductoModel.addOrUpdateProductInCarrito({
-      carrito_producto_id: 0, // Este valor será sobrescrito por el modelo
+      carrito_producto_id: 0,
       carrito_id,
       product_id,
       cantidad,
@@ -102,6 +106,22 @@ class CarritoService {
     }
 
     return productos;
+  }
+
+  /**
+   * Finaliza un carrito, ajusta el stock y cambia el estado a Completado.
+   * @param carrito_id ID del carrito.
+   */
+  async finalizeCarrito(carrito_id: number): Promise<void> {
+    this.validateParams({ carrito_id });
+
+    const carrito = await CarritoModel.obtenerCarritoPorCliente(carrito_id);
+    if (!carrito || carrito.estado_pago !== 'Pendiente') {
+      throw new Error('El carrito no está en estado Pendiente o no existe.');
+    }
+
+    await carritoProductoModel.ajustarStockAlFinalizar(carrito_id);
+    await CarritoModel.finalizarCompra(carrito_id);
   }
 
   /**
