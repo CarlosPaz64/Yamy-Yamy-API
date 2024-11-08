@@ -45,49 +45,47 @@ class CarritoService {
     return carrito.carrito_id!;
   }
 
- /**
- * Añade o actualiza un producto en el carrito.
- * @param client_id ID del cliente.
- * @param product_id ID del producto.
- * @param cantidad Cantidad del producto.
- * @param token Token de autenticación.
- * @returns El ID del producto en el carrito.
- */
-async addOrUpdateProductInCarrito(
-  client_id: number,
-  product_id: number,
-  cantidad: number,
-  token: string
-): Promise<{ carrito_producto_id: number }> {
-  this.validateParams({ client_id, product_id, cantidad, token });
+  /**
+   * Añade o actualiza un producto en el carrito.
+   * @param client_id ID del cliente.
+   * @param product_id ID del producto.
+   * @param cantidad Cantidad del producto.
+   * @param token Token de autenticación.
+   * @returns El ID del producto en el carrito.
+   */
+  async addOrUpdateProductInCarrito(
+    client_id: number,
+    product_id: number,
+    cantidad: number,
+    token: string
+  ): Promise<{ carrito_producto_id: number }> {
+    this.validateParams({ client_id, product_id, cantidad, token });
 
-  const carrito_id = await this.createOrGetCarrito(client_id, token);
+    const carrito_id = await this.createOrGetCarrito(client_id, token);
 
-  const producto = await ProductoModel.getProductById(product_id);
-  if (!producto) {
-    throw new Error('Producto no encontrado.');
+    const producto = await ProductoModel.getProductById(product_id);
+    if (!producto) {
+      throw new Error('Producto no encontrado.');
+    }
+
+    if (producto.stock < cantidad) {
+      throw new Error('Stock insuficiente.');
+    }
+
+    // Llamada al modelo que devuelve siempre un carrito_producto_id
+    const result = await carritoProductoModel.addOrUpdateProductInCarrito({
+      carrito_producto_id: 0, // Este valor será sobrescrito por el modelo
+      carrito_id,
+      product_id,
+      cantidad,
+    });
+
+    if (!result.carrito_producto_id) {
+      throw new Error('Error al añadir o actualizar el producto en el carrito.');
+    }
+
+    return result;
   }
-
-  if (producto.stock < cantidad) {
-    throw new Error('Stock insuficiente.');
-  }
-
-  // Llamada al modelo que devuelve siempre un carrito_producto_id
-  const result = await carritoProductoModel.addOrUpdateProductInCarrito({
-    carrito_producto_id: 0, // Este valor será sobrescrito por el modelo
-    carrito_id,
-    product_id,
-    cantidad,
-  });
-
-  // Garantizar que el carrito_producto_id es retornado
-  if (!result.carrito_producto_id) {
-    throw new Error('Error al añadir o actualizar el producto en el carrito.');
-  }
-
-  return result; // Devolver el carrito_producto_id
-}
-
 
   /**
    * Obtiene los productos de un carrito específico.
@@ -113,6 +111,15 @@ async addOrUpdateProductInCarrito(
    */
   async removeProductFromCarrito(carrito_producto_id: number, cantidad: number): Promise<void> {
     this.validateParams({ carrito_producto_id, cantidad });
+
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      throw new Error('La cantidad debe ser un número entero positivo.');
+    }
+
+    const productoEnCarrito = await carritoProductoModel.getProductsByCarritoId(carrito_producto_id);
+    if (productoEnCarrito.length === 0) {
+      throw new Error(`Producto con ID ${carrito_producto_id} no encontrado en el carrito.`);
+    }
 
     await carritoProductoModel.decrementProductQuantityInCarrito(carrito_producto_id, cantidad);
   }
