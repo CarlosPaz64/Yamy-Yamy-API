@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS carrito (
     fecha_tarjeta VARCHAR(255) NOT NULL,  -- Fecha de expiración de la tarjeta
     cvv VARCHAR(255) NOT NULL,            -- CVV en formato encriptado
     precio_total DECIMAL(10, 2) NOT NULL, -- Precio total del carrito
+    estado_pago ENUM('Pendiente', 'Completado') DEFAULT 'Pendiente', -- Maneja el estado del carrito 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
 );

@@ -1,4 +1,3 @@
-// src/controllers/carritoController.ts
 import { Request, Response } from 'express';
 import { carritoService } from '../services/carritoServices';
 import CarritoModel from '../models/carritoModels';
@@ -7,7 +6,7 @@ class CarritoController {
   // Crear o obtener un carrito para el cliente
   async createCarrito(req: Request, res: Response): Promise<void> {
     const { client_id, token, opcion_entrega, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv } = req.body;
-    
+
     console.log('Datos recibidos en createCarrito:', { client_id, token, opcion_entrega, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv });
 
     try {
@@ -33,7 +32,7 @@ class CarritoController {
   // Agregar o actualizar un producto en el carrito
   async addOrUpdateProduct(req: Request, res: Response): Promise<void> {
     const { client_id, product_id, cantidad, token } = req.body;
-    
+
     console.log('Datos recibidos en addOrUpdateProduct:', { client_id, product_id, cantidad, token });
 
     try {
@@ -49,7 +48,7 @@ class CarritoController {
   // Obtener todos los productos en un carrito específico
   async getProductsInCarrito(req: Request, res: Response): Promise<void> {
     const { carrito_id } = req.params;
-    
+
     console.log('Carrito ID recibido en getProductsInCarrito:', carrito_id);
 
     try {
@@ -59,6 +58,21 @@ class CarritoController {
     } catch (error) {
       console.error('Error en getProductsInCarrito:', error);
       res.status(500).json({ message: 'Error al obtener productos del carrito' });
+    }
+  }
+
+  // Finalizar el carrito
+  async finalizeCarrito(req: Request, res: Response): Promise<void> {
+    const { carrito_id } = req.params;
+
+    console.log('Carrito ID recibido en finalizeCarrito:', carrito_id);
+
+    try {
+      await carritoService.finalizeCarrito(Number(carrito_id));
+      res.status(200).json({ message: 'Carrito finalizado exitosamente', carrito_id: Number(carrito_id) });
+    } catch (error) {
+      console.error('Error en finalizeCarrito:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Error al finalizar el carrito' });
     }
   }
 
@@ -95,6 +109,21 @@ class CarritoController {
     } catch (error) {
       console.error('Error en clearCarrito:', error);
       res.status(500).json({ message: 'Error al vaciar el carrito' });
+    }
+  }
+
+  // Obtener datos del cliente relacionados con el carrito
+  async getClientCartData(req: Request, res: Response): Promise<void> {
+    const { client_id } = req.params;
+
+    console.log('Client ID recibido en getClientCartData:', client_id);
+
+    try {
+      const clientData = await CarritoModel.obtenerDatosCliente(Number(client_id));
+      res.status(200).json(clientData);
+    } catch (error) {
+      console.error('Error en getClientCartData:', error);
+      res.status(500).json({ message: 'Error al obtener datos del cliente' });
     }
   }
 }

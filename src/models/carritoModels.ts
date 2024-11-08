@@ -1,8 +1,11 @@
 import { db } from '../database/database';
 import { RowDataPacket } from 'mysql2/promise';
+import CryptoJS from 'crypto-js';
+
+const SECRET_KEY = 'tu_clave_secreta';
 
 export interface CarritoDatos {
-  carrito_id?: number; // Añadir esta propiedad
+  carrito_id?: number;
   client_id: number;
   token: string;
   opcion_entrega: 'domicilio' | 'recoger';
@@ -19,10 +22,28 @@ export interface CarritoDatos {
   numero_tarjeta: string;
   fecha_tarjeta: string;
   cvv: string;
+  estado_pago?: 'Pendiente' | 'Completado';
 }
 
 class CarritoModel {
-  // Crear un nuevo carrito con datos prellenados
+  // Método para encriptar datos
+  private static encrypt(data: string): string {
+    return CryptoJS.AES.encrypt(data, SECRET_KEY, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    }).toString();
+  }
+
+  // Método para desencriptar datos
+  private static decrypt(data: string): string {
+    const bytes = CryptoJS.AES.decrypt(data, SECRET_KEY, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+    return bytes.toString(CryptoJS.enc.Utf8);
+  }
+
+  // Crear un nuevo carrito con estado pendiente
   static async crearCarrito(carrito: CarritoDatos): Promise<number> {
     const {
       client_id,
@@ -47,9 +68,9 @@ class CarritoModel {
       INSERT INTO carrito (
         client_id, token, opcion_entrega, precio_total, calle, numero_exterior, 
         numero_interior, colonia, ciudad, codigo_postal, descripcion_ubicacion, 
-        numero_telefono, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv
+        numero_telefono, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv, estado_pago
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente')
     `;
 
     const [result] = await db.execute(query, [
@@ -65,16 +86,16 @@ class CarritoModel {
       codigo_postal,
       descripcion_ubicacion,
       numero_telefono,
-      tipo_tarjeta,
-      numero_tarjeta,
-      fecha_tarjeta,
-      cvv,
+      this.encrypt(tipo_tarjeta),
+      this.encrypt(numero_tarjeta),
+      this.encrypt(fecha_tarjeta),
+      this.encrypt(cvv),
     ]);
 
-    return (result as any).insertId; // Devuelve el ID del carrito recién creado
+    return (result as any).insertId;
   }
 
-  // Obtener los datos actuales del cliente
+  // Obtener los datos actuales del cliente para prellenar el carrito
   static async obtenerDatosCliente(client_id: number): Promise<Partial<CarritoDatos>> {
     const query = `
       SELECT 
@@ -89,10 +110,18 @@ class CarritoModel {
       throw new Error(`No se encontraron datos para el cliente con ID ${client_id}`);
     }
 
-    return rows[0] as Partial<CarritoDatos>;
+    const data = rows[0] as Partial<CarritoDatos>;
+
+    return {
+      ...data,
+      tipo_tarjeta: data.tipo_tarjeta ? this.decrypt(data.tipo_tarjeta) : undefined,
+      numero_tarjeta: data.numero_tarjeta ? this.decrypt(data.numero_tarjeta) : undefined,
+      fecha_tarjeta: data.fecha_tarjeta ? this.decrypt(data.fecha_tarjeta) : undefined,
+      cvv: data.cvv ? this.decrypt(data.cvv) : undefined,
+    };
   }
 
-  // Actualizar datos del cliente en la tabla "cliente"
+  // Actualizar datos del cliente
   static async actualizarDatosCliente(
     client_id: number,
     datosActualizados: Partial<CarritoDatos>
@@ -139,20 +168,20 @@ class CarritoModel {
       codigo_postal,
       descripcion_ubicacion,
       numero_telefono,
-      tipo_tarjeta,
-      numero_tarjeta,
-      fecha_tarjeta,
-      cvv,
+      tipo_tarjeta ? this.encrypt(tipo_tarjeta) : null,
+      numero_tarjeta ? this.encrypt(numero_tarjeta) : null,
+      fecha_tarjeta ? this.encrypt(fecha_tarjeta) : null,
+      cvv ? this.encrypt(cvv) : null,
       client_id,
     ]);
   }
 
-  // Obtener carrito por cliente
+  // Obtener el carrito más reciente del cliente con estado pendiente
   static async obtenerCarritoPorCliente(client_id: number): Promise<CarritoDatos | null> {
     const query = `
       SELECT *
       FROM carrito
-      WHERE client_id = ?
+      WHERE client_id = ? AND estado_pago = 'Pendiente'
       ORDER BY created_at DESC
       LIMIT 1
     `;
@@ -165,7 +194,7 @@ class CarritoModel {
     return rows[0] as CarritoDatos;
   }
 
-  // Método para actualizar datos del carrito
+  // Actualizar datos del carrito antes de finalizar la compra
   static async actualizarCarrito(
     carrito_id: number,
     datosActualizados: Partial<CarritoDatos>
@@ -218,12 +247,26 @@ class CarritoModel {
       codigo_postal,
       descripcion_ubicacion,
       numero_telefono,
-      tipo_tarjeta,
-      numero_tarjeta,
-      fecha_tarjeta,
-      cvv,
+      tipo_tarjeta ? this.encrypt(tipo_tarjeta) : null,
+      numero_tarjeta ? this.encrypt(numero_tarjeta) : null,
+      fecha_tarjeta ? this.encrypt(fecha_tarjeta) : null,
+      cvv ? this.encrypt(cvv) : null,
       carrito_id,
     ]);
+  }
+
+  // Finalizar el carrito cambiando su estado a Completado
+  static async finalizarCompra(carrito_id: number): Promise<void> {
+    const query = `
+      UPDATE carrito
+      SET estado_pago = 'Completado'
+      WHERE carrito_id = ? AND estado_pago = 'Pendiente'
+    `;
+
+    const [result] = await db.execute(query, [carrito_id]);
+    if ((result as any).affectedRows === 0) {
+      throw new Error('No se pudo finalizar la compra. Verifica el estado del carrito.');
+    }
   }
 }
 
