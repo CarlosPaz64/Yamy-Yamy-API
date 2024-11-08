@@ -7,11 +7,14 @@ class CarritoController {
   // Crear o obtener un carrito para el cliente
   async createCarrito(req: Request, res: Response): Promise<void> {
     const { client_id, token, opcion_entrega, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv } = req.body;
+    
+    console.log('Datos recibidos en createCarrito:', { client_id, token, opcion_entrega, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv });
 
     try {
       const carritoId = await carritoService.createOrGetCarrito(client_id, token);
-      
-      // Opcional: Si necesitas actualizar datos adicionales en el carrito
+      console.log('Carrito ID obtenido/creado:', carritoId);
+
+      // Opcional: actualizar datos adicionales en el carrito
       await CarritoModel.actualizarCarrito(carritoId, {
         opcion_entrega,
         tipo_tarjeta,
@@ -22,7 +25,7 @@ class CarritoController {
 
       res.status(201).json({ message: 'Carrito creado o encontrado exitosamente', carritoId });
     } catch (error) {
-      console.error(error);
+      console.error('Error en createCarrito:', error);
       res.status(500).json({ message: 'Error al crear o obtener el carrito' });
     }
   }
@@ -30,12 +33,15 @@ class CarritoController {
   // Agregar o actualizar un producto en el carrito
   async addOrUpdateProduct(req: Request, res: Response): Promise<void> {
     const { client_id, product_id, cantidad, token } = req.body;
+    
+    console.log('Datos recibidos en addOrUpdateProduct:', { client_id, product_id, cantidad, token });
 
     try {
       const { carrito_producto_id } = await carritoService.addOrUpdateProductInCarrito(client_id, product_id, cantidad, token);
+      console.log('Producto añadido/actualizado en carrito_producto_id:', carrito_producto_id);
       res.status(200).json({ message: 'Producto añadido o actualizado en el carrito', carrito_producto_id });
     } catch (error) {
-      console.error(error);
+      console.error('Error en addOrUpdateProduct:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Error al agregar producto al carrito' });
     }
   }
@@ -43,27 +49,37 @@ class CarritoController {
   // Obtener todos los productos en un carrito específico
   async getProductsInCarrito(req: Request, res: Response): Promise<void> {
     const { carrito_id } = req.params;
+    
+    console.log('Carrito ID recibido en getProductsInCarrito:', carrito_id);
 
     try {
       const productos = await carritoService.getProductsInCarrito(Number(carrito_id));
+      console.log('Productos en carrito:', productos);
       res.status(200).json(productos);
     } catch (error) {
-      console.error(error);
+      console.error('Error en getProductsInCarrito:', error);
       res.status(500).json({ message: 'Error al obtener productos del carrito' });
     }
   }
 
-  // Eliminar un producto específico del carrito
+  // Eliminar o reducir la cantidad de un producto específico del carrito
   async removeProduct(req: Request, res: Response): Promise<void> {
     const { carrito_producto_id } = req.params;
     const { cantidad } = req.body;
 
+    console.log('Datos recibidos en removeProduct:', { carrito_producto_id, cantidad });
+
     try {
       await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
-      res.status(200).json({ message: 'Producto eliminado del carrito', carrito_producto_id: Number(carrito_producto_id) });
+      res.status(200).json({
+        message: cantidad > 0
+          ? 'Cantidad reducida en el carrito'
+          : 'Producto eliminado del carrito',
+        carrito_producto_id: Number(carrito_producto_id),
+      });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error al eliminar producto del carrito' });
+      console.error('Error en removeProduct:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Error al eliminar producto del carrito' });
     }
   }
 
@@ -71,11 +87,13 @@ class CarritoController {
   async clearCarrito(req: Request, res: Response): Promise<void> {
     const { carrito_id } = req.params;
 
+    console.log('Carrito ID recibido en clearCarrito:', carrito_id);
+
     try {
       await carritoService.clearCarrito(Number(carrito_id));
       res.status(200).json({ message: 'Carrito vaciado exitosamente', carrito_id: Number(carrito_id) });
     } catch (error) {
-      console.error(error);
+      console.error('Error en clearCarrito:', error);
       res.status(500).json({ message: 'Error al vaciar el carrito' });
     }
   }

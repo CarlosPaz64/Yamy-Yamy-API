@@ -66,6 +66,10 @@ class CarritoProductoModel {
   // Reducir la cantidad de un producto en el carrito
   async decrementProductQuantityInCarrito(carrito_producto_id: number, cantidad: number): Promise<void> {
     try {
+      if (!Number.isInteger(cantidad) || cantidad <= 0) {
+        throw new Error('La cantidad debe ser un número entero positivo.');
+      }
+
       const queryGetProduct = `
         SELECT cantidad, product_id
         FROM carrito_producto
@@ -80,7 +84,11 @@ class CarritoProductoModel {
 
       const { cantidad: cantidadActual, product_id } = productInfo;
 
-      if (cantidadActual <= cantidad) {
+      if (cantidad > cantidadActual) {
+        throw new Error('La cantidad a reducir excede la cantidad actual en el carrito.');
+      }
+
+      if (cantidadActual === cantidad) {
         const queryDelete = `
           DELETE FROM carrito_producto
           WHERE carrito_producto_id = ?
@@ -97,9 +105,9 @@ class CarritoProductoModel {
         const queryUpdateQuantity = `
           UPDATE carrito_producto
           SET cantidad = cantidad - ?
-          WHERE carrito_producto_id = ?
+          WHERE carrito_producto_id = ? AND cantidad >= ?
         `;
-        await db.execute<ResultSetHeader>(queryUpdateQuantity, [cantidad, carrito_producto_id]);
+        await db.execute<ResultSetHeader>(queryUpdateQuantity, [cantidad, carrito_producto_id, cantidad]);
 
         const queryUpdateStockPartial = `
           UPDATE producto
