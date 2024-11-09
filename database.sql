@@ -119,9 +119,6 @@ CREATE TABLE IF NOT EXISTS codigos_postales(
     ciudad VARCHAR(100)
 );
 
-SELECT url_imagen FROM producto WHERE product_id = 1;
-
-
 INSERT INTO codigos_postales (codigo_postal_usuario, colonia, ciudad) VALUES
 ('97000', 'Privada García','Mérida'),
 ('97000', 'Los Cocos','Mérida'),
