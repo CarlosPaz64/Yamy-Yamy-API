@@ -24,9 +24,9 @@ class CarritoService {
    */
   async createOrGetCarrito(client_id: number, token: string): Promise<number> {
     this.validateParams({ client_id, token });
-
+  
     let carrito = await CarritoModel.obtenerCarritoPorCliente(client_id);
-
+  
     if (!carrito) {
       const carrito_id = await CarritoModel.crearCarrito({
         client_id,
@@ -37,17 +37,19 @@ class CarritoService {
         numero_tarjeta: '',
         fecha_tarjeta: '',
         cvv: '',
-      });
+      }); // Ahora CarritoCreacion
       return carrito_id;
     }
-
+  
     if (carrito.estado_pago === 'Completado') {
       throw new Error('El cliente ya tiene un carrito finalizado.');
     }
-
-    return carrito.carrito_id!;
+  
+    return carrito.carrito_id;
   }
-
+  
+  
+  
   /**
    * Añade o actualiza un producto en un carrito en estado Pendiente.
    * @param client_id ID del cliente.
@@ -61,35 +63,36 @@ class CarritoService {
     product_id: number,
     cantidad: number,
     token: string
-  ): Promise<{ carrito_producto_id: number }> {
+  ): Promise<{ carrito_producto_id: number; carrito_id: number }> { // <-- Cambia el tipo de retorno
     this.validateParams({ client_id, product_id, cantidad, token });
-
+  
     const carrito_id = await this.createOrGetCarrito(client_id, token);
-
+  
     // Verificar existencia y stock del producto
     const producto = await ProductoModel.getProductById(product_id);
     if (!producto) {
       throw new Error('Producto no encontrado.');
     }
-
+  
     if (producto.stock < cantidad) {
       throw new Error('Stock insuficiente.');
     }
-
-    // Llamada al modelo que devuelve siempre un carrito_producto_id
+  
+    // Llamada al modelo que devuelve carrito_producto_id
     const result = await carritoProductoModel.addOrUpdateProductInCarrito({
       carrito_producto_id: 0,
       carrito_id,
       product_id,
       cantidad,
     });
-
+  
     if (!result.carrito_producto_id) {
       throw new Error('Error al añadir o actualizar el producto en el carrito.');
     }
-
-    return result;
+  
+    return { carrito_producto_id: result.carrito_producto_id, carrito_id }; // <-- Devuelve ambos valores
   }
+  
 
   /**
    * Obtiene los productos de un carrito específico.
@@ -111,6 +114,7 @@ class CarritoService {
   /**
    * Finaliza un carrito, ajusta el stock y cambia el estado a Completado.
    * @param carrito_id ID del carrito.
+   * @param client_id
    */
   async finalizeCarrito(carrito_id: number): Promise<void> {
     this.validateParams({ carrito_id });

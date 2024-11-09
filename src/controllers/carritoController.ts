@@ -32,18 +32,25 @@ class CarritoController {
   // Agregar o actualizar un producto en el carrito
   async addOrUpdateProduct(req: Request, res: Response): Promise<void> {
     const { client_id, product_id, cantidad, token } = req.body;
-
+  
     console.log('Datos recibidos en addOrUpdateProduct:', { client_id, product_id, cantidad, token });
-
+  
     try {
-      const { carrito_producto_id } = await carritoService.addOrUpdateProductInCarrito(client_id, product_id, cantidad, token);
-      console.log('Producto añadido/actualizado en carrito_producto_id:', carrito_producto_id);
-      res.status(200).json({ message: 'Producto añadido o actualizado en el carrito', carrito_producto_id });
+      const { carrito_producto_id, carrito_id } = await carritoService.addOrUpdateProductInCarrito(client_id, product_id, cantidad, token);
+      
+      console.log('Producto añadido/actualizado:', { carrito_producto_id, carrito_id });
+  
+      res.status(200).json({
+        message: 'Producto añadido o actualizado en el carrito',
+        carrito_producto_id,
+        carrito_id, // Asegúrate de enviar carrito_id
+      });
     } catch (error) {
       console.error('Error en addOrUpdateProduct:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Error al agregar producto al carrito' });
     }
   }
+  
 
   // Obtener todos los productos en un carrito específico
   async getProductsInCarrito(req: Request, res: Response): Promise<void> {
@@ -126,6 +133,7 @@ class CarritoController {
       res.status(500).json({ message: 'Error al obtener datos del cliente' });
     }
   }
+
 }
 
-export const carritoController = new CarritoController();
+export const carritoController = new CarritoController()
