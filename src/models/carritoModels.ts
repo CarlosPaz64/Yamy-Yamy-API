@@ -4,8 +4,8 @@ import CryptoJS from 'crypto-js';
 
 const SECRET_KEY = 'tu_clave_secreta';
 
-export interface CarritoDatos {
-  carrito_id?: number;
+export interface CarritoDatosBase {
+  carrito_id: number; // Obligatorio en operaciones existentes
   client_id: number;
   token: string;
   opcion_entrega: 'domicilio' | 'recoger';
@@ -24,6 +24,10 @@ export interface CarritoDatos {
   cvv: string;
   estado_pago?: 'Pendiente' | 'Completado';
 }
+
+export type CarritoCreacion = Omit<CarritoDatosBase, 'carrito_id'>; // Sin carrito_id
+
+
 
 class CarritoModel {
   // Método para encriptar datos
@@ -44,59 +48,60 @@ class CarritoModel {
   }
 
   // Crear un nuevo carrito con estado pendiente
-  static async crearCarrito(carrito: CarritoDatos): Promise<number> {
-    const {
-      client_id,
-      token,
-      opcion_entrega,
-      precio_total,
-      calle = null,
-      numero_exterior = null,
-      numero_interior = null,
-      colonia = null,
-      ciudad = null,
-      codigo_postal = null,
-      descripcion_ubicacion = null,
-      numero_telefono = null,
-      tipo_tarjeta,
-      numero_tarjeta,
-      fecha_tarjeta,
-      cvv,
-    } = carrito;
+  static async crearCarrito(carrito: CarritoCreacion): Promise<number> {
+  const {
+    client_id,
+    token,
+    opcion_entrega,
+    precio_total,
+    calle = null,
+    numero_exterior = null,
+    numero_interior = null,
+    colonia = null,
+    ciudad = null,
+    codigo_postal = null,
+    descripcion_ubicacion = null,
+    numero_telefono = null,
+    tipo_tarjeta,
+    numero_tarjeta,
+    fecha_tarjeta,
+    cvv,
+  } = carrito;
 
-    const query = `
-      INSERT INTO carrito (
-        client_id, token, opcion_entrega, precio_total, calle, numero_exterior, 
-        numero_interior, colonia, ciudad, codigo_postal, descripcion_ubicacion, 
-        numero_telefono, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv, estado_pago
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente')
-    `;
+  const query = `
+    INSERT INTO carrito (
+      client_id, token, opcion_entrega, precio_total, calle, numero_exterior, 
+      numero_interior, colonia, ciudad, codigo_postal, descripcion_ubicacion, 
+      numero_telefono, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv, estado_pago
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente')
+  `;
 
-    const [result] = await db.execute(query, [
-      client_id,
-      token,
-      opcion_entrega,
-      precio_total,
-      calle,
-      numero_exterior,
-      numero_interior,
-      colonia,
-      ciudad,
-      codigo_postal,
-      descripcion_ubicacion,
-      numero_telefono,
-      this.encrypt(tipo_tarjeta),
-      this.encrypt(numero_tarjeta),
-      this.encrypt(fecha_tarjeta),
-      this.encrypt(cvv),
-    ]);
+  const [result] = await db.execute(query, [
+    client_id,
+    token,
+    opcion_entrega,
+    precio_total,
+    calle,
+    numero_exterior,
+    numero_interior,
+    colonia,
+    ciudad,
+    codigo_postal,
+    descripcion_ubicacion,
+    numero_telefono,
+    this.encrypt(tipo_tarjeta),
+    this.encrypt(numero_tarjeta),
+    this.encrypt(fecha_tarjeta),
+    this.encrypt(cvv),
+  ]);
 
-    return (result as any).insertId;
-  }
+  return (result as any).insertId;
+}
 
+  
   // Obtener los datos actuales del cliente para prellenar el carrito
-  static async obtenerDatosCliente(client_id: number): Promise<Partial<CarritoDatos>> {
+  static async obtenerDatosCliente(client_id: number): Promise<Partial<CarritoDatosBase>> {
     const query = `
       SELECT 
         calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal,
@@ -110,7 +115,7 @@ class CarritoModel {
       throw new Error(`No se encontraron datos para el cliente con ID ${client_id}`);
     }
 
-    const data = rows[0] as Partial<CarritoDatos>;
+    const data = rows[0] as Partial<CarritoDatosBase>;
 
     return {
       ...data,
@@ -124,7 +129,7 @@ class CarritoModel {
   // Actualizar datos del cliente
   static async actualizarDatosCliente(
     client_id: number,
-    datosActualizados: Partial<CarritoDatos>
+    datosActualizados: Partial<CarritoDatosBase>
   ): Promise<void> {
     const {
       calle,
@@ -177,7 +182,7 @@ class CarritoModel {
   }
 
   // Obtener el carrito más reciente del cliente con estado pendiente
-  static async obtenerCarritoPorCliente(client_id: number): Promise<CarritoDatos | null> {
+  static async obtenerCarritoPorCliente(client_id: number): Promise<CarritoDatosBase | null> {
     const query = `
       SELECT *
       FROM carrito
@@ -191,13 +196,25 @@ class CarritoModel {
       return null;
     }
 
-    return rows[0] as CarritoDatos;
+    return rows[0] as CarritoDatosBase;
   }
+  static async validarCarritoCliente(carrito_id: number, client_id: number): Promise<void> {
+    const query = `
+      SELECT carrito_id FROM carrito 
+      WHERE carrito_id = ? AND client_id = ?
+    `;
+    const [rows] = await db.execute<RowDataPacket[]>(query, [carrito_id, client_id]);
+    
+    if (rows.length === 0) {
+      throw new Error(`El carrito con ID ${carrito_id} no pertenece al cliente con ID ${client_id}`);
+    }
+  }
+  
 
   // Actualizar datos del carrito antes de finalizar la compra
   static async actualizarCarrito(
     carrito_id: number,
-    datosActualizados: Partial<CarritoDatos>
+    datosActualizados: Partial<CarritoDatosBase>
   ): Promise<void> {
     const {
       opcion_entrega,
