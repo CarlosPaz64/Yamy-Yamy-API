@@ -1,4 +1,4 @@
-import CarritoModel from '../models/carritoModels';
+import CarritoModel, { CarritoDatosBase } from '../models/carritoModels';
 import { carritoProductoModel, CarritoProducto } from '../models/carritoProductoModel';
 import { ProductoModel } from '../models/productoModel';
 
@@ -24,9 +24,9 @@ class CarritoService {
    */
   async createOrGetCarrito(client_id: number, token: string): Promise<number> {
     this.validateParams({ client_id, token });
-  
+
     let carrito = await CarritoModel.obtenerCarritoPorCliente(client_id);
-  
+
     if (!carrito) {
       const carrito_id = await CarritoModel.crearCarrito({
         client_id,
@@ -37,19 +37,17 @@ class CarritoService {
         numero_tarjeta: '',
         fecha_tarjeta: '',
         cvv: '',
-      }); // Ahora CarritoCreacion
+      });
       return carrito_id;
     }
-  
+
     if (carrito.estado_pago === 'Completado') {
       throw new Error('El cliente ya tiene un carrito finalizado.');
     }
-  
+
     return carrito.carrito_id;
   }
-  
-  
-  
+
   /**
    * Añade o actualiza un producto en un carrito en estado Pendiente.
    * @param client_id ID del cliente.
@@ -63,21 +61,21 @@ class CarritoService {
     product_id: number,
     cantidad: number,
     token: string
-  ): Promise<{ carrito_producto_id: number; carrito_id: number }> { // <-- Cambia el tipo de retorno
+  ): Promise<{ carrito_producto_id: number; carrito_id: number }> {
     this.validateParams({ client_id, product_id, cantidad, token });
-  
+
     const carrito_id = await this.createOrGetCarrito(client_id, token);
-  
+
     // Verificar existencia y stock del producto
     const producto = await ProductoModel.getProductById(product_id);
     if (!producto) {
       throw new Error('Producto no encontrado.');
     }
-  
+
     if (producto.stock < cantidad) {
       throw new Error('Stock insuficiente.');
     }
-  
+
     // Llamada al modelo que devuelve carrito_producto_id
     const result = await carritoProductoModel.addOrUpdateProductInCarrito({
       carrito_producto_id: 0,
@@ -85,14 +83,13 @@ class CarritoService {
       product_id,
       cantidad,
     });
-  
+
     if (!result.carrito_producto_id) {
       throw new Error('Error al añadir o actualizar el producto en el carrito.');
     }
-  
-    return { carrito_producto_id: result.carrito_producto_id, carrito_id }; // <-- Devuelve ambos valores
+
+    return { carrito_producto_id: result.carrito_producto_id, carrito_id };
   }
-  
 
   /**
    * Obtiene los productos de un carrito específico.
@@ -114,18 +111,29 @@ class CarritoService {
   /**
    * Finaliza un carrito, ajusta el stock y cambia el estado a Completado.
    * @param carrito_id ID del carrito.
-   * @param client_id
    */
   async finalizeCarrito(carrito_id: number): Promise<void> {
     this.validateParams({ carrito_id });
 
-    const carrito = await CarritoModel.obtenerCarritoPorCliente(carrito_id);
+    const carrito = await CarritoModel.obtenerCarritoPorId(carrito_id);
+
     if (!carrito || carrito.estado_pago !== 'Pendiente') {
       throw new Error('El carrito no está en estado Pendiente o no existe.');
     }
 
     await carritoProductoModel.ajustarStockAlFinalizar(carrito_id);
     await CarritoModel.finalizarCompra(carrito_id);
+  }
+
+  /**
+   * Actualiza los datos del cliente, incluyendo su domicilio y datos bancarios.
+   * @param client_id ID del cliente.
+   * @param datosActualizados Datos del cliente a actualizar.
+   */
+  async updateClientData(client_id: number, datosActualizados: Partial<CarritoDatosBase>): Promise<void> {
+    this.validateParams({ client_id });
+
+    await CarritoModel.actualizarDatosCliente(client_id, datosActualizados);
   }
 
   /**
@@ -140,8 +148,10 @@ class CarritoService {
       throw new Error('La cantidad debe ser un número entero positivo.');
     }
 
-    const productoEnCarrito = await carritoProductoModel.getProductsByCarritoId(carrito_producto_id);
-    if (productoEnCarrito.length === 0) {
+    const productoEnCarrito = await carritoProductoModel.getProductsByCarritoId(
+      carrito_producto_id
+    );
+    if (!productoEnCarrito) {
       throw new Error(`Producto con ID ${carrito_producto_id} no encontrado en el carrito.`);
     }
 
@@ -162,6 +172,25 @@ class CarritoService {
 
     await carritoProductoModel.clearCarrito(carrito_id);
   }
+
+  // Nuevo método
+  async updateCarritoAddress(carrito_id: number, datosActualizados: Partial<CarritoDatosBase>): Promise<void> {
+    this.validateParams({ carrito_id });
+  
+    await CarritoModel.actualizarCarrito(carrito_id, {
+      opcion_entrega: datosActualizados.opcion_entrega, // Asegúrate de que este campo se actualice
+      calle: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.calle : '',
+      numero_exterior: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.numero_exterior : '',
+      numero_interior: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.numero_interior : '',
+      colonia: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.colonia : '',
+      ciudad: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.ciudad : '',
+      codigo_postal: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.codigo_postal : '',
+      descripcion_ubicacion: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.descripcion_ubicacion : '',
+      numero_telefono: datosActualizados.opcion_entrega === 'domicilio' ? datosActualizados.numero_telefono : '',
+    });
+  }
+  
+  
 }
 
 export const carritoService = new CarritoService();
