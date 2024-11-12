@@ -1,8 +1,8 @@
-// src/models/CarritoProductoModel.ts
 import { db } from '../database/database';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
 export interface CarritoProducto {
-  carrito_producto_id?: number;
+  carrito_producto_id: number;
   carrito_id: number;
   product_id: number;
   cantidad: number;
@@ -10,45 +10,137 @@ export interface CarritoProducto {
 
 class CarritoProductoModel {
   // Añadir o incrementar un producto en el carrito
-  async addOrUpdateProductInCarrito(carritoProducto: CarritoProducto): Promise<void> {
+  async addOrUpdateProductInCarrito(carritoProducto: CarritoProducto): Promise<{ carrito_producto_id: number }> {
     const { carrito_id, product_id, cantidad } = carritoProducto;
 
-    // Verificar si el producto ya está en el carrito
-    const queryCheck = `
-      SELECT * FROM carrito_producto
-      WHERE carrito_id = ? AND product_id = ?
-    `;
-    const [existingRows] = await db.execute(queryCheck, [carrito_id, product_id]);
-    const existingProduct = (existingRows as CarritoProducto[])[0];
+    try {
+      // Verificar el estado del carrito
+      const carritoEstadoQuery = `
+        SELECT estado_pago FROM carrito WHERE carrito_id = ?
+      `;
+      const [estadoRows] = await db.execute<RowDataPacket[]>(carritoEstadoQuery, [carrito_id]);
+      const carritoEstado = estadoRows[0]?.estado_pago;
 
-    if (existingProduct) {
-      // Si el producto ya está en el carrito, incrementa la cantidad
-      const queryUpdate = `
-        UPDATE carrito_producto
-        SET cantidad = cantidad + ?
+      if (carritoEstado !== 'Pendiente') {
+        throw new Error('No se pueden agregar productos a un carrito finalizado.');
+      }
+
+      const queryCheck = `
+        SELECT * FROM carrito_producto
+        WHERE carrito_id = ? AND product_id = ?
+      `;
+      const [existingRows] = await db.execute<RowDataPacket[]>(queryCheck, [carrito_id, product_id]);
+      const existingProduct = existingRows[0] as CarritoProducto | undefined;
+
+      let carrito_producto_id: number;
+
+      if (existingProduct) {
+        const queryUpdate = `
+          UPDATE carrito_producto
+          SET cantidad = cantidad + ?
+          WHERE carrito_producto_id = ?
+        `;
+        await db.execute<ResultSetHeader>(queryUpdate, [cantidad, existingProduct.carrito_producto_id]);
+        carrito_producto_id = existingProduct.carrito_producto_id;
+      } else {
+        const queryInsert = `
+          INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
+          VALUES (?, ?, ?)
+        `;
+        const [insertResult] = await db.execute<ResultSetHeader>(queryInsert, [carrito_id, product_id, cantidad]);
+        carrito_producto_id = insertResult.insertId;
+      }
+
+      return { carrito_producto_id };
+    } catch (error) {
+      console.error('Error en addOrUpdateProductInCarrito:', error);
+      throw new Error('Error al añadir o actualizar el producto en el carrito.');
+    }
+  }
+
+  // Ajustar el stock al finalizar la compra
+  async ajustarStockAlFinalizar(carrito_id: number): Promise<void> {
+    try {
+      const queryProductos = `
+        SELECT cp.product_id, cp.cantidad, p.stock
+        FROM carrito_producto cp
+        INNER JOIN producto p ON cp.product_id = p.product_id
+        WHERE cp.carrito_id = ?
+      `;
+
+      const [productos] = await db.execute<RowDataPacket[]>(queryProductos, [carrito_id]);
+
+      for (const producto of productos) {
+        if (producto.stock < producto.cantidad) {
+          throw new Error(`Stock insuficiente para el producto con ID ${producto.product_id}`);
+        }
+
+        const queryUpdateStock = `
+          UPDATE producto
+          SET stock = stock - ?
+          WHERE product_id = ?
+        `;
+        await db.execute<ResultSetHeader>(queryUpdateStock, [producto.cantidad, producto.product_id]);
+      }
+    } catch (error) {
+      console.error('Error en ajustarStockAlFinalizar:', error);
+      throw new Error('Error al ajustar el stock al finalizar la compra.');
+    }
+  }
+
+  // Reducir la cantidad de un producto en el carrito
+  async decrementProductQuantityInCarrito(carrito_producto_id: number, cantidad: number): Promise<void> {
+    try {
+      if (!Number.isInteger(cantidad) || cantidad <= 0) {
+        throw new Error('La cantidad debe ser un número entero positivo.');
+      }
+
+      const queryGetProduct = `
+        SELECT cantidad, carrito_id
+        FROM carrito_producto
         WHERE carrito_producto_id = ?
       `;
-      await db.execute(queryUpdate, [cantidad, existingProduct.carrito_producto_id]);
-    } else {
-      // Si el producto no está en el carrito, añádelo como nueva entrada
-      const queryInsert = `
-        INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
-        VALUES (?, ?, ?)
+      const [rows] = await db.execute<RowDataPacket[]>(queryGetProduct, [carrito_producto_id]);
+      const productInfo = rows[0] as { cantidad: number; carrito_id: number } | undefined;
+
+      if (!productInfo) {
+        throw new Error('Producto no encontrado en el carrito.');
+      }
+
+      const { cantidad: cantidadActual, carrito_id } = productInfo;
+
+      // Verificar el estado del carrito
+      const carritoEstadoQuery = `
+        SELECT estado_pago FROM carrito WHERE carrito_id = ?
       `;
-      await db.execute(queryInsert, [carrito_id, product_id, cantidad]);
-    }
+      const [estadoRows] = await db.execute<RowDataPacket[]>(carritoEstadoQuery, [carrito_id]);
+      const carritoEstado = estadoRows[0]?.estado_pago;
 
-    // Reducir el stock del producto en la tabla `producto`
-    const queryUpdateStock = `
-      UPDATE producto
-      SET stock = stock - ?
-      WHERE product_id = ? AND stock >= ?
-    `;
-    const [updateStockResult] = await db.execute(queryUpdateStock, [cantidad, product_id, cantidad]);
+      if (carritoEstado !== 'Pendiente') {
+        throw new Error('No se pueden modificar productos de un carrito finalizado.');
+      }
 
-    // Verificar si la actualización de stock fue exitosa
-    if ((updateStockResult as any).affectedRows === 0) {
-      throw new Error('Stock insuficiente para este producto');
+      if (cantidad > cantidadActual) {
+        throw new Error('La cantidad a reducir excede la cantidad actual en el carrito.');
+      }
+
+      if (cantidadActual === cantidad) {
+        const queryDelete = `
+          DELETE FROM carrito_producto
+          WHERE carrito_producto_id = ?
+        `;
+        await db.execute<ResultSetHeader>(queryDelete, [carrito_producto_id]);
+      } else {
+        const queryUpdateQuantity = `
+          UPDATE carrito_producto
+          SET cantidad = cantidad - ?
+          WHERE carrito_producto_id = ? AND cantidad >= ?
+        `;
+        await db.execute<ResultSetHeader>(queryUpdateQuantity, [cantidad, carrito_producto_id, cantidad]);
+      }
+    } catch (error) {
+      console.error('Error en decrementProductQuantityInCarrito:', error);
+      throw new Error('Error al reducir la cantidad del producto en el carrito.');
     }
   }
 
@@ -58,61 +150,9 @@ class CarritoProductoModel {
       SELECT * FROM carrito_producto
       WHERE carrito_id = ?
     `;
-    const [rows] = await db.execute(query, [carrito_id]);
+    const [rows] = await db.execute<RowDataPacket[]>(query, [carrito_id]);
     return rows as CarritoProducto[];
   }
-
- // Reducir la cantidad de un producto específico en el carrito
- async decrementProductQuantityInCarrito(carrito_producto_id: number, cantidad: number): Promise<void> {
-  // Obtener la cantidad actual del producto en el carrito
-  const queryGetProduct = `
-    SELECT cantidad, product_id
-    FROM carrito_producto
-    WHERE carrito_producto_id = ?
-  `;
-  const [rows] = await db.execute(queryGetProduct, [carrito_producto_id]);
-  const productInfo = (rows as { cantidad: number; product_id: number }[])[0];
-
-  if (!productInfo) {
-    throw new Error('Producto no encontrado en el carrito');
-  }
-
-  const { cantidad: cantidadActual, product_id } = productInfo;
-
-  if (cantidadActual <= cantidad) {
-    // Si la cantidad a reducir es mayor o igual a la cantidad actual, eliminar el producto
-    const queryDelete = `
-      DELETE FROM carrito_producto
-      WHERE carrito_producto_id = ?
-    `;
-    await db.execute(queryDelete, [carrito_producto_id]);
-
-    // Restablecer el stock del producto
-    const queryUpdateStock = `
-      UPDATE producto
-      SET stock = stock + ?
-      WHERE product_id = ?
-    `;
-    await db.execute(queryUpdateStock, [cantidadActual, product_id]);
-  } else {
-    // Reducir la cantidad del producto en el carrito
-    const queryUpdateQuantity = `
-      UPDATE carrito_producto
-      SET cantidad = cantidad - ?
-      WHERE carrito_producto_id = ?
-    `;
-    await db.execute(queryUpdateQuantity, [cantidad, carrito_producto_id]);
-
-    // Restablecer parcialmente el stock del producto
-    const queryUpdateStockPartial = `
-      UPDATE producto
-      SET stock = stock + ?
-      WHERE product_id = ?
-    `;
-    await db.execute(queryUpdateStockPartial, [cantidad, product_id]);
-  }
-}
-
 
   // Vaciar el carrito completo de un cliente
   async clearCarrito(carrito_id: number): Promise<void> {
@@ -120,7 +160,7 @@ class CarritoProductoModel {
       DELETE FROM carrito_producto
       WHERE carrito_id = ?
     `;
-    await db.execute(query, [carrito_id]);
+    await db.execute<ResultSetHeader>(query, [carrito_id]);
   }
 }
 
