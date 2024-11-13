@@ -162,6 +162,20 @@ class CarritoProductoModel {
     `;
     await db.execute<ResultSetHeader>(query, [carrito_id]);
   }
+
+  async calcularTotalCarrito(carrito_id: number): Promise<number> {
+    const query = `
+      SELECT SUM(p.precio * cp.cantidad) AS total
+      FROM carrito_producto cp
+      INNER JOIN producto p ON cp.product_id = p.product_id
+      WHERE cp.carrito_id = ?
+    `;
+
+    const [rows] = await db.execute<RowDataPacket[]>(query, [carrito_id]);
+    const total = rows[0]?.total || 0; // Si no hay productos, el total es 0
+
+    return Number(total); // Devuelve el total como un número
+  }
 }
 
 export const carritoProductoModel = new CarritoProductoModel();
