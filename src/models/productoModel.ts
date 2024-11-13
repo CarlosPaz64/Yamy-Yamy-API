@@ -89,4 +89,27 @@ export class ProductoModel {
 
     return productos as Producto[];
   }
+
+  // Obtener un producto por su ID
+  static async getProductById(product_id: number): Promise<Producto | null> {
+    const query = 'SELECT * FROM producto WHERE product_id = ?';
+    const [rows]: any[] = await db.query(query, [product_id]);
+
+    if (rows.length === 0) return null;
+
+    const producto = rows[0];
+
+    // Convertir el Buffer de la imagen a base64 si es necesario
+    if (producto.url_imagen && Buffer.isBuffer(producto.url_imagen)) {
+      let mimeType = 'image/png'; // Tipo MIME por defecto
+
+      if (producto.mime_type) {
+        mimeType = producto.mime_type;
+      }
+
+      producto.url_imagen = `data:${mimeType};base64,${producto.url_imagen.toString('base64')}`;
+    }
+
+    return producto as Producto;
+  }
 }
