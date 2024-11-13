@@ -284,18 +284,19 @@ static async actualizarDatosCliente(
 }
 
   // Finalizar el carrito cambiando su estado a Completado
-  static async finalizarCompra(carrito_id: number): Promise<void> {
+  static async finalizarCompra(carrito_id: number, precio_total: number): Promise<void> {
     const query = `
       UPDATE carrito
-      SET estado_pago = 'Completado'
+      SET estado_pago = 'Completado', precio_total = ?
       WHERE carrito_id = ? AND estado_pago = 'Pendiente'
     `;
-
-    const [result] = await db.execute(query, [carrito_id]);
+  
+    const [result] = await db.execute(query, [precio_total, carrito_id]);
     if ((result as any).affectedRows === 0) {
       throw new Error('No se pudo finalizar la compra. Verifica el estado del carrito.');
     }
   }
+  
 }
 
 export default CarritoModel;
