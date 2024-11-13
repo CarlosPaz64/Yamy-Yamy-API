@@ -4,11 +4,12 @@ import { verificarConexion } from './database/database';  // Asegúrate de impor
 import productosRoutes from './routes/productosRoute';  // Importar las rutas de productos
 import userRoutes from './routes/userRoutes';
 import zipCodeRoute from './routes/zipCodeRoute'; // Importa la ruta de los codigos postales
+import path from 'path'; /* necesario para manipular rutas de archivos y directorios de una manera más segura 
+y compartible con el sistema, se utiliza principalmente para acceder a las imagenes de la web mediante una URL*/
 import carritoRoutes from './routes/carritoRoutes'; // Importación de las rutas del carrito
 import pedidoPersonalizadoRoute from './routes/pedidoPersonalizadoRoute';
 
 const cors = require('cors');
-
 
 dotenv.config();  // Cargar las variables de entorno desde el archivo .env
 
@@ -31,11 +32,12 @@ app.use('/api/productos', productosRoutes);  // Ruta para los productos
 app.use('/api/users', userRoutes);
 // Ruta para los codigos postales
 app.use('/api', zipCodeRoute); // Ruta para los codigos postales
+// Ruta para consultar las imagenes/recursos en URL para la web
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // Rutas del carrito de compras
 app.use('/api/carrito', carritoRoutes);
 // Ruta para el pedido personalizado
 app.use('/api', pedidoPersonalizadoRoute); // Usa el prefijo /api
-
 
 // Verificar la conexión a la base de datos al iniciar el servidor
 verificarConexion();  // Llamar a la función para verificar la conexión
