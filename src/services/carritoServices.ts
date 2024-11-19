@@ -187,6 +187,22 @@ class CarritoService {
     await carritoProductoModel.decrementProductQuantityInCarrito(carrito_producto_id, cantidad);
   }
 
+/**
+ * Elimina un producto específico del carrito.
+ * @param carrito_producto_id ID del producto en el carrito.
+ */
+async dropProductFromCarrito(carrito_producto_id: number): Promise<void> {
+  this.validateParams({ carrito_producto_id });
+
+  const productoEnCarrito = await carritoProductoModel.getProductsByCarritoId(carrito_producto_id);
+
+  if (!productoEnCarrito) {
+    throw new Error(`Producto con ID ${carrito_producto_id} no encontrado en el carrito.`);
+  }
+
+  await carritoProductoModel.removeProductFromCarrito(carrito_producto_id);
+}
+
   /**
    * Vacía el carrito completo de un cliente.
    * @param carrito_id ID del carrito.
