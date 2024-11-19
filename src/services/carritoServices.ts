@@ -121,15 +121,15 @@ class CarritoService {
    */
   async getProductsInCarrito(carrito_id: number): Promise<CarritoProducto[]> {
     this.validateParams({ carrito_id });
-
+  
     const productos = await carritoProductoModel.getProductsByCarritoId(carrito_id);
-
-    if (productos.length === 0) {
-      throw new Error(`El carrito con ID ${carrito_id} no contiene productos.`);
-    }
-
+  
+    // Log para depuración, pero devuelve la lista de productos sin lanzar un error.
+    console.log(`Productos obtenidos para el carrito con ID ${carrito_id}:`, productos);
+  
     return productos;
   }
+  
 
   /**
    * Finaliza un carrito, ajusta el stock y cambia el estado a Completado.
