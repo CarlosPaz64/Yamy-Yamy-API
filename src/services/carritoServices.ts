@@ -92,6 +92,29 @@ class CarritoService {
   }
 
   /**
+   * Incrementa la cantidad de un producto en el carrito.
+   * @param carrito_producto_id ID del producto en el carrito.
+   * @param cantidad Cantidad a incrementar.
+   * @throws Error si los parámetros no son válidos o si ocurre algún problema en la base de datos.
+   */
+  async incrementProductQuantity(carrito_producto_id: number, cantidad: number): Promise<void> {
+    if (!carrito_producto_id || carrito_producto_id <= 0) {
+      throw new Error('El ID del producto en el carrito debe ser un número positivo.');
+    }
+
+    if (!cantidad || cantidad <= 0) {
+      throw new Error('La cantidad a incrementar debe ser un número positivo.');
+    }
+
+    try {
+      await carritoProductoModel.incrementProductQuantity(carrito_producto_id, cantidad);
+    } catch (error) {
+      console.error('Error incrementando la cantidad del producto en el carrito:', error);
+      throw new Error('Error al incrementar la cantidad del producto en el carrito.');
+    }
+  }
+
+  /**
    * Obtiene los productos de un carrito específico.
    * @param carrito_id ID del carrito.
    * @returns Lista de productos.

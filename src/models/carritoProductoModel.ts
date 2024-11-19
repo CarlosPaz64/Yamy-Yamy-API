@@ -143,17 +143,55 @@ class CarritoProductoModel {
       throw new Error('Error al reducir la cantidad del producto en el carrito.');
     }
   }
+ // Eliminacióin del producto
+  async removeProductFromCarrito(carrito_producto_id: number): Promise<void> {
+    const query = `DELETE FROM carrito_producto WHERE carrito_producto_id = ?`;
+    await db.execute(query, [carrito_producto_id]);
+  }
+  
 
   // Obtener productos en un carrito específico
-  async getProductsByCarritoId(carrito_id: number): Promise<CarritoProducto[]> {
+  async getProductsByCarritoId(carrito_id: number): Promise<any[]> {
     const query = `
-      SELECT * FROM carrito_producto
-      WHERE carrito_id = ?
+      SELECT 
+        cp.carrito_producto_id,
+        cp.carrito_id,
+        cp.product_id,
+        cp.cantidad,
+        p.nombre_producto,
+        p.precio,
+        p.url_imagen
+      FROM 
+        carrito_producto cp
+      INNER JOIN 
+        producto p ON cp.product_id = p.product_id
+      WHERE 
+        cp.carrito_id = ?
     `;
+  
     const [rows] = await db.execute<RowDataPacket[]>(query, [carrito_id]);
-    return rows as CarritoProducto[];
+  
+    return rows.map((row) => ({
+      carrito_producto_id: row.carrito_producto_id,
+      carrito_id: row.carrito_id,
+      product_id: row.product_id,
+      cantidad: row.cantidad,
+      nombre_producto: row.nombre_producto,
+      precio: row.precio,
+      url_imagen: row.url_imagen ? `data:image/jpeg;base64,${Buffer.from(row.url_imagen).toString('base64')}` : null,
+    }));
   }
-
+  // Inmcrementar productos
+  async incrementProductQuantity(carrito_producto_id: number, cantidad: number): Promise<void> {
+    const query = `
+      UPDATE carrito_producto
+      SET cantidad = cantidad + ?
+      WHERE carrito_producto_id = ?
+    `;
+    await db.execute(query, [cantidad, carrito_producto_id]);
+  }
+  
+  
   // Vaciar el carrito completo de un cliente
   async clearCarrito(carrito_id: number): Promise<void> {
     const query = `
