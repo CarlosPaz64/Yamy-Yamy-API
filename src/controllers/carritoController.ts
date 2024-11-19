@@ -136,14 +136,12 @@ class CarritoController {
   // Eliminar o reducir la cantidad de un producto específico del carrito
   async removeProduct(req: Request, res: Response): Promise<void> {
     const { carrito_producto_id } = req.params;
-    const { cantidad } = req.body;
 
-    console.log('Datos recibidos en removeProduct:', { carrito_producto_id, cantidad });
+    console.log('Datos recibidos en removeProduct:', { carrito_producto_id });
 
     try {
-      await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
+      await carritoService.dropProductFromCarrito(Number(carrito_producto_id));
       res.status(200).json({
-        message: cantidad > 0 ? 'Cantidad reducida en el carrito' : 'Producto eliminado del carrito',
         carrito_producto_id: Number(carrito_producto_id),
       });
     } catch (error) {
@@ -168,15 +166,15 @@ async incrementProductQuantity(req: Request, res: Response): Promise<void> {
 }
 
 
-    // Reducir la cantidad de un producto específico del carrito
-    async reduceProductQuantity(req: Request, res: Response): Promise<void> {
-      const { carrito_producto_id } = req.params;
-      const { cantidad } = req.body;
+// Reducir la cantidad de un producto específico del carrito
+async reduceProductQuantity(req: Request, res: Response): Promise<void> {
+  const { carrito_producto_id } = req.params;
+  const { cantidad } = req.body;
   
-      console.log('Datos recibidos en reduceProductQuantity:', { carrito_producto_id, cantidad });
+  console.log('Datos recibidos en reduceProductQuantity:', { carrito_producto_id, cantidad });
   
-      try {
-        await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
+  try {
+    await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
         res.status(200).json({
           message: 'Cantidad reducida en el carrito',
           carrito_producto_id: Number(carrito_producto_id),
