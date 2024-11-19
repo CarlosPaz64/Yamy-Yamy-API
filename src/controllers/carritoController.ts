@@ -80,18 +80,16 @@ class CarritoController {
   // Obtener todos los productos en un carrito específico
   async getProductsInCarrito(req: Request, res: Response): Promise<void> {
     const { carrito_id } = req.params;
-
-    console.log('Carrito ID recibido en getProductsInCarrito:', carrito_id);
-
+  
     try {
       const productos = await carritoService.getProductsInCarrito(Number(carrito_id));
-      console.log('Productos en carrito:', productos);
       res.status(200).json(productos);
     } catch (error) {
       console.error('Error en getProductsInCarrito:', error);
       res.status(500).json({ message: 'Error al obtener productos del carrito' });
     }
   }
+  
 
   async finalizeCarrito(req: Request, res: Response): Promise<void> {
     const { carrito_id } = req.params; // ID del carrito en la URL
@@ -153,6 +151,43 @@ class CarritoController {
       res.status(500).json({ message: error instanceof Error ? error.message : 'Error al eliminar producto del carrito' });
     }
   }
+
+  // Incrementar la cantidad de un producto en el carrito
+async incrementProductQuantity(req: Request, res: Response): Promise<void> {
+  const { carrito_producto_id } = req.params;
+  const { cantidad } = req.body;
+
+  try {
+    // Lógica para incrementar la cantidad del producto
+    await carritoService.incrementProductQuantity(Number(carrito_producto_id), Number(cantidad));
+    res.status(200).json({ message: 'Cantidad incrementada exitosamente' });
+  } catch (error) {
+    console.error('Error incrementando la cantidad:', error);
+    res.status(500).json({ message: 'Error incrementando la cantidad del producto' });
+  }
+}
+
+
+    // Reducir la cantidad de un producto específico del carrito
+    async reduceProductQuantity(req: Request, res: Response): Promise<void> {
+      const { carrito_producto_id } = req.params;
+      const { cantidad } = req.body;
+  
+      console.log('Datos recibidos en reduceProductQuantity:', { carrito_producto_id, cantidad });
+  
+      try {
+        await carritoService.removeProductFromCarrito(Number(carrito_producto_id), Number(cantidad));
+        res.status(200).json({
+          message: 'Cantidad reducida en el carrito',
+          carrito_producto_id: Number(carrito_producto_id),
+        });
+      } catch (error) {
+        console.error('Error en reduceProductQuantity:', error);
+        res.status(500).json({
+          message: error instanceof Error ? error.message : 'Error al reducir cantidad del producto en el carrito',
+        });
+      }
+    }
 
   // Vaciar el carrito completo de un cliente
   async clearCarrito(req: Request, res: Response): Promise<void> {
