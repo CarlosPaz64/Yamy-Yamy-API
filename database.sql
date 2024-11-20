@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS producto (
     nombre_producto VARCHAR(100) NOT NULL,
     descripcion_producto TEXT,
     precio DECIMAL(10, 2) NOT NULL,
-    categoria ENUM('Cupcake', 'Cupcake personalizado', 'Pastel', 'Pastel personalizado', 'Postre', 'Producto de temporada') NOT NULL,
+    categoria ENUM('Cupcake', 'Cupcake personalizado', 'Pastel', 'Pastel personalizado', 'Brownies', 'Postre', 'Postre personalizado', 'Crepas', 'Roles', 'Galleta', 'Galleta personalizada', 'Producto de temporada') NOT NULL,
     stock INT NOT NULL,
     url_imagen LONGBLOB,
     epoca VARCHAR(100),
@@ -43,27 +43,30 @@ CREATE TABLE IF NOT EXISTS carrito (
     carrito_id INT AUTO_INCREMENT PRIMARY KEY,
     client_id INT NOT NULL,
     token LONGTEXT NOT NULL,
+    opcion_entrega ENUM('domicilio', 'recoger') NOT NULL, -- Opción de entrega: domicilio o recoger en tienda
+
+
+    -- Información de domicilio para el pedido personalizado
+    calle VARCHAR(255), -- Calle, puede estar prellenada si elige domicilio registrado
+    numero_exterior VARCHAR(10),
+    numero_interior VARCHAR(10),
+    colonia VARCHAR(100),
+    ciudad VARCHAR(100),
+    codigo_postal VARCHAR(10),
+    descripcion_ubicacion VARCHAR(100), -- Descripción específica del domicilio
+    
+    numero_telefono VARCHAR(20), -- Número de teléfono del cliente (editable)
+    
+    tipo_tarjeta VARCHAR(255) NOT NULL, -- Tipo de tarjeta (Visa, MasterCard, etc.)
+    numero_tarjeta VARCHAR(255) NOT NULL, -- Número de tarjeta enmascarado o encriptado
+    fecha_tarjeta VARCHAR(255) NOT NULL,  -- Fecha de expiración de la tarjeta
+    cvv VARCHAR(255) NOT NULL,            -- CVV en formato encriptado
+    precio_total DECIMAL(10, 2) NOT NULL, -- Precio total del carrito
+    estado_pago ENUM('Pendiente', 'Completado') DEFAULT 'Pendiente', -- Maneja el estado del carrito 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
-);
--- Tabla intermediaria para los productos del carrito
-CREATE TABLE IF NOT EXISTS carrito_producto (
-    carrito_producto_id INT AUTO_INCREMENT PRIMARY KEY,
-    carrito_id INT NOT NULL,
-    product_id INT NOT NULL,
-    cantidad INT NOT NULL DEFAULT 1,
-    FOREIGN KEY (carrito_id) REFERENCES carrito(carrito_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES producto(product_id) ON DELETE CASCADE
 );
 
--- Nuevas tablas
-CREATE TABLE IF NOT EXISTS carrito (
-    carrito_id INT AUTO_INCREMENT PRIMARY KEY,
-    client_id INT NOT NULL,
-    token LONGTEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES cliente(client_id) ON DELETE CASCADE
-);
 -- Tabla intermediaria para los productos del carrito
 CREATE TABLE IF NOT EXISTS carrito_producto (
     carrito_producto_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,9 +118,6 @@ CREATE TABLE IF NOT EXISTS codigos_postales(
     colonia VARCHAR(200),
     ciudad VARCHAR(100)
 );
-
-SELECT url_imagen FROM producto WHERE product_id = 1;
-
 
 INSERT INTO codigos_postales (codigo_postal_usuario, colonia, ciudad) VALUES
 ('97000', 'Privada García','Mérida'),
