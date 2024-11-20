@@ -92,21 +92,44 @@ class CarritoService {
   }
 
   /**
+   * Incrementa la cantidad de un producto en el carrito.
+   * @param carrito_producto_id ID del producto en el carrito.
+   * @param cantidad Cantidad a incrementar.
+   * @throws Error si los parámetros no son válidos o si ocurre algún problema en la base de datos.
+   */
+  async incrementProductQuantity(carrito_producto_id: number, cantidad: number): Promise<void> {
+    if (!carrito_producto_id || carrito_producto_id <= 0) {
+      throw new Error('El ID del producto en el carrito debe ser un número positivo.');
+    }
+
+    if (!cantidad || cantidad <= 0) {
+      throw new Error('La cantidad a incrementar debe ser un número positivo.');
+    }
+
+    try {
+      await carritoProductoModel.incrementProductQuantity(carrito_producto_id, cantidad);
+    } catch (error) {
+      console.error('Error incrementando la cantidad del producto en el carrito:', error);
+      throw new Error('Error al incrementar la cantidad del producto en el carrito.');
+    }
+  }
+
+  /**
    * Obtiene los productos de un carrito específico.
    * @param carrito_id ID del carrito.
    * @returns Lista de productos.
    */
   async getProductsInCarrito(carrito_id: number): Promise<CarritoProducto[]> {
     this.validateParams({ carrito_id });
-
+  
     const productos = await carritoProductoModel.getProductsByCarritoId(carrito_id);
-
-    if (productos.length === 0) {
-      throw new Error(`El carrito con ID ${carrito_id} no contiene productos.`);
-    }
-
+  
+    // Log para depuración, pero devuelve la lista de productos sin lanzar un error.
+    console.log(`Productos obtenidos para el carrito con ID ${carrito_id}:`, productos);
+  
     return productos;
   }
+  
 
   /**
    * Finaliza un carrito, ajusta el stock y cambia el estado a Completado.
@@ -163,6 +186,22 @@ class CarritoService {
 
     await carritoProductoModel.decrementProductQuantityInCarrito(carrito_producto_id, cantidad);
   }
+
+/**
+ * Elimina un producto específico del carrito.
+ * @param carrito_producto_id ID del producto en el carrito.
+ */
+async dropProductFromCarrito(carrito_producto_id: number): Promise<void> {
+  this.validateParams({ carrito_producto_id });
+
+  const productoEnCarrito = await carritoProductoModel.getProductsByCarritoId(carrito_producto_id);
+
+  if (!productoEnCarrito) {
+    throw new Error(`Producto con ID ${carrito_producto_id} no encontrado en el carrito.`);
+  }
+
+  await carritoProductoModel.removeProductFromCarrito(carrito_producto_id);
+}
 
   /**
    * Vacía el carrito completo de un cliente.
