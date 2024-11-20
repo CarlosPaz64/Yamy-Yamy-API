@@ -58,13 +58,7 @@ export class ProductoModel {
         'Cupcake personalizado', 
         'Pastel', 
         'Pastel personalizado', 
-        'Brownies', 
         'Postre', 
-        'Postre personalizado', 
-        'Crepas', 
-        'Roles', 
-        'Galleta', 
-        'Galleta personalizada', 
         'Producto de temporada'
       )
     `;
