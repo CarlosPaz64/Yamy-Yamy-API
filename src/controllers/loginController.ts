@@ -39,10 +39,15 @@ export class LoginController {
         expiresIn: '1h', // El token expira en 1 hora
       });
 
-      // Responder con el token y el ID del usuario
-      res.status(200).json({ token, userId: user.id, message: 'Inicio de sesión exitoso' });
+      // Responder con el token, el ID del usuario, el nombre y el apellido
+      res.status(200).json({
+        token,
+        userId: user.id,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        message: 'Inicio de sesión exitoso',
+      });
     } catch (error) {
-
       if (error instanceof Error) {
         console.error('Error en el inicio de sesión:', error.message);
         res.status(401).json({ message: error.message || 'Error en el inicio de sesión' });
