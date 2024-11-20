@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS producto (
     nombre_producto VARCHAR(100) NOT NULL,
     descripcion_producto TEXT,
     precio DECIMAL(10, 2) NOT NULL,
-    categoria ENUM('Cupcake', 'Cupcake personalizado', 'Pastel', 'Pastel personalizado', 'Brownies', 'Postre', 'Postre personalizado', 'Crepas', 'Roles', 'Galleta', 'Galleta personalizada', 'Producto de temporada') NOT NULL,
+    categoria ENUM('Cupcake', 'Cupcake personalizado', 'Pastel', 'Pastel personalizado', 'Postre', 'Producto de temporada') NOT NULL,
     stock INT NOT NULL,
     url_imagen LONGBLOB,
     epoca VARCHAR(100),
