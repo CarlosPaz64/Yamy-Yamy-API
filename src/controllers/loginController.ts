@@ -1,15 +1,15 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { CustomSessionRequest } from '../types/express-session'; // Asegúrate de que la ruta sea correcta
 import { LoginService } from '../services/loginService';
 import CryptoJS from 'crypto-js';
 import jwt from 'jsonwebtoken';
 
-const SECRET_KEY = 'tu_clave_secreta';  // Debe ser la misma clave usada para encriptar los datos
-const JWT_SECRET = 'jwt_secret_key';    // Clave secreta para firmar el token JWT
+const SECRET_KEY = 'tu_clave_secreta';
+const JWT_SECRET = 'jwt_secret_key';
 
 export class LoginController {
-  static async loginUser(req: Request, res: Response): Promise<void> {
+  static async loginUser(req: CustomSessionRequest, res: Response): Promise<void> {
     try {
-      // Obtener los datos encriptados desde el cliente
       const { encryptedData } = req.body;
 
       if (!encryptedData) {
@@ -17,7 +17,6 @@ export class LoginController {
         return;
       }
 
-      // Desencriptar los datos
       const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY, {
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7,
@@ -31,21 +30,24 @@ export class LoginController {
         return;
       }
 
-      // Validar el usuario y la contraseña usando el servicio de autenticación
       const user = await LoginService.loginUser(email, password);
 
-      // Generar el token JWT
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
-        expiresIn: '1h', // El token expira en 1 hora
+        expiresIn: '1h',
       });
 
-      // Responder con el token, el ID del usuario, el nombre y el apellido
+      // Guardar token y userId en la sesión
+      req.session.token = token;
+      req.session.userId = user.id;
+      console.log("Este es el token de la sesión: ",req.session.token);
+      console.log("Este es el id del cliente: ",req.session.userId);
+
       res.status(200).json({
-        token,
+        message: 'Inicio de sesión exitoso',
         userId: user.id,
         nombre: user.nombre,
         apellido: user.apellido,
-        message: 'Inicio de sesión exitoso',
+        token
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -56,5 +58,15 @@ export class LoginController {
         res.status(500).json({ message: 'Error inesperado en el servidor' });
       }
     }
+  }
+
+  static async logoutUser(req: CustomSessionRequest, res: Response): Promise<void> {
+    req.session.destroy((err) => {
+      if (err) {
+        res.status(500).json({ message: 'Error al cerrar sesión' });
+      } else {
+        res.status(200).json({ message: 'Sesión cerrada con éxito' });
+      }
+    });
   }
 }
