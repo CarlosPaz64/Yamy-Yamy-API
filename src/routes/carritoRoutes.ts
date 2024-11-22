@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { carritoController } from '../controllers/carritoController';
+import { verifyUserToken } from '../middlewares/verifyUserToken'; // Asegúrate de que la ruta sea correcta
 
 const router = Router();
+
+// Aplicar el middleware verifyUserToken a todas las rutas del carrito
+router.use(verifyUserToken);
 
 // Rutas del carrito
 
