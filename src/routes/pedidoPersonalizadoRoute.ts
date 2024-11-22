@@ -2,8 +2,12 @@ import express, { Router, Request, Response, RequestHandler } from 'express';
 import multer from 'multer';
 import PedidoPersonalizadoController from '../controllers/pedidoPersonalizadoController';
 import PedidoPersonalizadoModel from '../models/pedidoPersonalizadoModel';
+import { verifyUserToken } from '../middlewares/verifyUserToken'; // Asegúrate de que la ruta sea correcta
 
 const router = Router();
+// Aplicar el middleware verifyUserToken a todas las rutas del carrito
+router.use(verifyUserToken);
+
 const upload = multer();
 
 // Ruta para crear un nuevo pedido personalizado
