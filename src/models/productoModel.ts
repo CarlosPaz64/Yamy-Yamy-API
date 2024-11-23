@@ -39,16 +39,6 @@ export class ProductoModel {
     return productos as Producto[];
   }
 
-  // Crear un nuevo producto (sin product_id)
-  static async crearProducto(producto: NuevoProducto): Promise<void> {
-    const { nombre_producto, descripcion_producto, precio, categoria, stock, url_imagen, epoca } = producto;
-
-    await db.query(
-      'INSERT INTO producto (nombre_producto, descripcion_producto, precio, categoria, stock, url_imagen, epoca) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [nombre_producto, descripcion_producto, precio, categoria, stock, url_imagen, epoca]
-    );
-  }
-
   // Obtener todos los productos ordenados por categoría
   static async obtenerTodosOrdenadosPorCategoria(): Promise<Producto[]> {
     const query = `
