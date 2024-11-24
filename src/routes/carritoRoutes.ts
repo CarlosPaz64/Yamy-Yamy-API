@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { carritoController } from '../controllers/carritoController';
 import { verifyUserToken } from '../middlewares/verifyUserToken'; // Asegúrate de que la ruta sea correcta
+import multer from 'multer';
+
+const upload = multer();
 
 const router = Router();
 
@@ -31,7 +34,7 @@ router.delete('/remove-product/:carrito_producto_id', carritoController.removePr
 router.delete('/clear/:carrito_id', carritoController.clearCarrito);
 
 // Finalizar el carrito (cambiar estado a "Completado" y ajustar stock)
-router.put('/finalize/:carrito_id', carritoController.finalizeCarrito);
+router.put('/finalize/:carrito_id', upload.none(), carritoController.finalizeCarrito);
 
 // Obtener datos del cliente relacionados con el carrito
 router.get('/client/:client_id', carritoController.getClientCartData);
