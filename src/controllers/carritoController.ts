@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { carritoService } from '../services/carritoServices';
 import CarritoModel, { CarritoDatosBase } from '../models/carritoModels';
+import CryptoJS from 'crypto-js';
+
+const SECRET_KEY = 'tu_clave_secreta';
 
 class CarritoController {
   // Crear o obtener un carrito para el cliente
@@ -93,23 +96,25 @@ class CarritoController {
 
   async finalizeCarrito(req: Request, res: Response): Promise<void> {
     const { carrito_id } = req.params; // ID del carrito en la URL
-    const clientData = req.body; // Datos enviados desde el front-end
-  
-    console.log('Carrito ID recibido en finalizeCarrito:', carrito_id);
-    console.log('Datos del cliente recibidos en finalizeCarrito:', clientData);
+    const encryptedData = req.body.encryptedData; // Datos encriptados recibidos desde el front-end
   
     try {
-      // Validar la opción de entrega y realizar las actualizaciones correspondientes
+      if (!encryptedData) {
+        throw new Error('No se recibieron datos encriptados.');
+      }
+  
+      // Desencriptar los datos
+      const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY);
+      const clientData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+  
+      console.log('Carrito ID recibido en finalizeCarrito:', carrito_id);
+      console.log('Datos del cliente desencriptados en finalizeCarrito:', clientData);
+  
+      // Validar y procesar la información desencriptada
       if (clientData.opcion_entrega === 'domicilio') {
-        // Si es domicilio, se actualizan los datos de cliente y carrito con domicilio
-        console.log('Opción de entrega: domicilio. Actualizando datos del cliente y carrito.');
-  
-        await carritoService.updateClientData(clientData.client_id, clientData); // Actualizar tabla cliente
-        await carritoService.updateCarritoAddress(Number(carrito_id), clientData); // Actualizar tabla carrito
+        await carritoService.updateClientData(clientData.client_id, clientData);
+        await carritoService.updateCarritoAddress(Number(carrito_id), clientData);
       } else if (clientData.opcion_entrega === 'recoger') {
-        // Si es recoger, solo se actualiza la opción de entrega en el carrito
-        console.log('Opción de entrega: recoger. Actualizando solo la opción de entrega en carrito.');
-  
         await carritoService.updateCarritoAddress(Number(carrito_id), {
           opcion_entrega: clientData.opcion_entrega,
         });
@@ -117,7 +122,6 @@ class CarritoController {
         throw new Error('Opción de entrega no válida.');
       }
   
-      // Finalizar el carrito cambiando su estado a Completado
       await carritoService.finalizeCarrito(Number(carrito_id));
   
       res.status(200).json({
@@ -130,8 +134,7 @@ class CarritoController {
         message: error instanceof Error ? error.message : 'Error al finalizar el carrito',
       });
     }
-  }
-  
+  }  
   
   // Eliminar o reducir la cantidad de un producto específico del carrito
   async removeProduct(req: Request, res: Response): Promise<void> {
