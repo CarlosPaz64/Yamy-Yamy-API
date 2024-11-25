@@ -37,7 +37,6 @@ class CarritoController {
       res.status(500).json({ message: 'Error al crear o obtener el carrito' });
     }
   }
-
   // Validar que los datos de domicilio sean correctos y estén completos
   private validateDomicilio(domicilio: Partial<CarritoDatosBase>): void {
     const requiredFields: (keyof CarritoDatosBase)[] = [
@@ -56,9 +55,31 @@ class CarritoController {
       throw new Error(`Faltan los siguientes campos de domicilio: ${missingFields.join(', ')}`);
     }
   }
-  
 
-  // Agregar o actualizar un producto en el carrito
+  // Obtener el carrito pendiente para el cliente autenticado
+  async getPendingCarrito(req: any, res: any): Promise<void> {
+    try {
+      console.log('req.user recibido en controlador:', req.user); // Debug
+      const clientId = req.user?.id;
+      console.log('Client ID recibido en getPendingCarrito:', clientId);
+  
+      if (!clientId) {
+        return res.status(401).json({ message: 'Usuario no autenticado' });
+      }
+  
+      const carrito = await CarritoModel.obtenerCarritoPorCliente(clientId);
+  
+      if (!carrito) {
+        return res.status(404).json({ message: 'No se encontró un carrito pendiente' });
+      }
+  
+      res.status(200).json(carrito);
+    } catch (error) {
+      console.error('Error en getPendingCarrito:', error);
+      res.status(500).json({ message: 'Error al obtener el carrito pendiente' });
+    }
+  }  
+    // Agregar o actualizar un producto en el carrito
   async addOrUpdateProduct(req: Request, res: Response): Promise<void> {
     const { client_id, product_id, cantidad, token } = req.body;
 
