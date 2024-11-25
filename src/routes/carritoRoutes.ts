@@ -15,6 +15,9 @@ router.use(verifyUserToken);
 // Crear o obtener un nuevo carrito para el cliente
 router.post('/create', carritoController.createCarrito);
 
+// Ruta para obtener el carrito pendiente del cliente autenticado
+router.get('/pending', carritoController.getPendingCarrito);
+
 // Agregar o actualizar un producto en el carrito
 router.post('/add-product', carritoController.addOrUpdateProduct);
 
