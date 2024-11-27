@@ -1,6 +1,8 @@
 import CarritoModel, { CarritoDatosBase } from '../models/carritoModels';
 import { carritoProductoModel, CarritoProducto } from '../models/carritoProductoModel';
 import { ProductoModel } from '../models/productoModel';
+import { db } from '../database/database';
+import { RowDataPacket } from 'mysql2';
 
 class CarritoService {
   /**
@@ -63,19 +65,29 @@ class CarritoService {
     token: string
   ): Promise<{ carrito_producto_id: number; carrito_id: number }> {
     this.validateParams({ client_id, product_id, cantidad, token });
-
+  
     const carrito_id = await this.createOrGetCarrito(client_id, token);
-
+  
     // Verificar existencia y stock del producto
     const producto = await ProductoModel.getProductById(product_id);
     if (!producto) {
       throw new Error('Producto no encontrado.');
     }
-
-    if (producto.stock < cantidad) {
+  
+    // Obtener la cantidad actual en el carrito para este producto
+    const queryGetCantidadActual = `
+      SELECT cantidad
+      FROM carrito_producto
+      WHERE carrito_id = ? AND product_id = ?
+    `;
+    const [rows] = await db.execute<RowDataPacket[]>(queryGetCantidadActual, [carrito_id, product_id]);
+    const cantidadActualEnCarrito = rows[0]?.cantidad || 0;
+  
+    // Validar que la cantidad total no exceda el stock
+    if (cantidadActualEnCarrito + cantidad > producto.stock) {
       throw new Error('Stock insuficiente.');
     }
-
+  
     // Llamada al modelo que devuelve carrito_producto_id
     const result = await carritoProductoModel.addOrUpdateProductInCarrito({
       carrito_producto_id: 0,
@@ -83,13 +95,13 @@ class CarritoService {
       product_id,
       cantidad,
     });
-
+  
     if (!result.carrito_producto_id) {
       throw new Error('Error al añadir o actualizar el producto en el carrito.');
     }
-
+  
     return { carrito_producto_id: result.carrito_producto_id, carrito_id };
-  }
+  }  
 
   /**
    * Incrementa la cantidad de un producto en el carrito.
@@ -101,18 +113,46 @@ class CarritoService {
     if (!carrito_producto_id || carrito_producto_id <= 0) {
       throw new Error('El ID del producto en el carrito debe ser un número positivo.');
     }
-
+  
     if (!cantidad || cantidad <= 0) {
       throw new Error('La cantidad a incrementar debe ser un número positivo.');
     }
-
+  
     try {
-      await carritoProductoModel.incrementProductQuantity(carrito_producto_id, cantidad);
+      // Obtener detalles del producto en el carrito
+      const queryGetProduct = `
+        SELECT cp.cantidad, p.stock
+        FROM carrito_producto cp
+        INNER JOIN producto p ON cp.product_id = p.product_id
+        WHERE cp.carrito_producto_id = ?
+      `;
+      const [rows] = await db.execute<RowDataPacket[]>(queryGetProduct, [carrito_producto_id]);
+      const productInfo = rows[0];
+  
+      if (!productInfo) {
+        throw new Error('Producto no encontrado en el carrito.');
+      }
+  
+      const { cantidad: cantidadActual, stock } = productInfo;
+  
+      // Verificar si el incremento excederá el stock
+      if (cantidadActual + cantidad > stock) {
+        throw new Error('Stock insuficiente para incrementar la cantidad.');
+      }
+  
+      // Realizar el incremento
+      const queryUpdate = `
+        UPDATE carrito_producto
+        SET cantidad = cantidad + ?
+        WHERE carrito_producto_id = ?
+      `;
+      await db.execute(queryUpdate, [cantidad, carrito_producto_id]);
     } catch (error) {
       console.error('Error incrementando la cantidad del producto en el carrito:', error);
       throw new Error('Error al incrementar la cantidad del producto en el carrito.');
     }
-  }
+  }  
+  
 
   /**
    * Obtiene los productos de un carrito específico.
