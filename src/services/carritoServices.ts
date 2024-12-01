@@ -178,6 +178,13 @@ class CarritoService {
   async finalizeCarrito(carrito_id: number): Promise<void> {
     this.validateParams({ carrito_id });
   
+    // Verifica si hay productos en el carrito
+    const productosEnCarrito = await carritoProductoModel.getProductsByCarritoId(carrito_id);
+  
+    if (productosEnCarrito.length === 0) {
+      throw new Error('El carrito no contiene productos.');
+    }
+  
     const carrito = await CarritoModel.obtenerCarritoPorId(carrito_id);
   
     if (!carrito || carrito.estado_pago !== 'Pendiente') {
@@ -193,6 +200,7 @@ class CarritoService {
     // Finaliza el carrito con el precio total calculado
     await CarritoModel.finalizarCompra(carrito_id, precio_total);
   }
+  
   
   /**
    * Actualiza los datos del cliente, incluyendo su domicilio y datos bancarios.
