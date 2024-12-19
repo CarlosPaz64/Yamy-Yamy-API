@@ -102,7 +102,7 @@ class CarritoModel {
     const query = `
       SELECT 
         calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal,
-        descripcion_ubicacion, numero_telefono, tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv
+        descripcion_ubicacion, numero_telefono
       FROM cliente
       WHERE client_id = ?
     `;
@@ -242,10 +242,6 @@ static async actualizarDatosCliente(
     codigo_postal,
     descripcion_ubicacion,
     numero_telefono,
-    tipo_tarjeta,
-    numero_tarjeta,
-    fecha_tarjeta,
-    cvv,
   } = datosActualizados;
 
   const query = `
@@ -258,11 +254,7 @@ static async actualizarDatosCliente(
       ciudad = COALESCE(?, ciudad),
       codigo_postal = COALESCE(?, codigo_postal),
       descripcion_ubicacion = COALESCE(?, descripcion_ubicacion),
-      numero_telefono = COALESCE(?, numero_telefono),
-      tipo_tarjeta = COALESCE(?, tipo_tarjeta),
-      numero_tarjeta = COALESCE(?, numero_tarjeta),
-      fecha_tarjeta = COALESCE(?, fecha_tarjeta),
-      cvv = COALESCE(?, cvv)
+      numero_telefono = COALESCE(?, numero_telefono)
     WHERE client_id = ?
   `;
 
@@ -275,10 +267,6 @@ static async actualizarDatosCliente(
     codigo_postal,
     descripcion_ubicacion,
     numero_telefono,
-    tipo_tarjeta ? this.encrypt(tipo_tarjeta) : null,
-    numero_tarjeta ? this.encrypt(numero_tarjeta) : null,
-    fecha_tarjeta ? this.encrypt(fecha_tarjeta) : null,
-    cvv ? this.encrypt(cvv) : null,
     client_id,
   ]);
 }
