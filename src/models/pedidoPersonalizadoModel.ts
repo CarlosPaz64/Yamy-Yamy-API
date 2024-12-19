@@ -72,8 +72,7 @@ class PedidoPersonalizadoModel {
   // Método para obtener los datos del cliente (dirección y forma de pago)
   static async obtenerDatosCliente(client_id: number) {
     return db.query(
-      `SELECT calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, numero_telefono, descripcion_ubicacion,
-              tipo_tarjeta, numero_tarjeta, fecha_tarjeta, cvv
+      `SELECT calle, numero_exterior, numero_interior, colonia, ciudad, codigo_postal, numero_telefono, descripcion_ubicacion
        FROM cliente
        WHERE client_id = ?`,
       [client_id]
@@ -91,10 +90,6 @@ class PedidoPersonalizadoModel {
       descripcion_ubicacion,
       codigo_postal,
       numero_telefono,
-      tipo_tarjeta,
-      numero_tarjeta,
-      fecha_tarjeta,
-      cvv
     } = datos;
 
     await db.query(
@@ -106,11 +101,7 @@ class PedidoPersonalizadoModel {
         ciudad = COALESCE(?, ciudad),
         descripcion_ubicacion = COALESCE(?, descripcion_ubicacion),
         codigo_postal = COALESCE(?, codigo_postal),
-        numero_telefono = COALESCE(?, numero_telefono),
-        tipo_tarjeta = COALESCE(?, tipo_tarjeta),
-        numero_tarjeta = COALESCE(?, numero_tarjeta),
-        fecha_tarjeta = COALESCE(?, fecha_tarjeta),
-        cvv = COALESCE(?, cvv)
+        numero_telefono = COALESCE(?, numero_telefono)
       WHERE client_id = ?`,
       [
         calle,
@@ -121,10 +112,6 @@ class PedidoPersonalizadoModel {
         descripcion_ubicacion,
         codigo_postal,
         numero_telefono,
-        tipo_tarjeta,
-        numero_tarjeta,
-        fecha_tarjeta,
-        cvv,
         client_id
       ]
     );
