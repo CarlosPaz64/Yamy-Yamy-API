@@ -54,7 +54,9 @@ app.use('/api', pedidoPersonalizadoRoute); // Usa el prefijo /api
 verificarConexion(); // Llamar a la función para verificar la conexión
 
 // Iniciar el servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+//const PORT = process.env.PORT || 3000;
+//app.listen(PORT, () => {
+//  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+//});
+
+export default app;
