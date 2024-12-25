@@ -11,8 +11,6 @@
     "outDir": "./build",
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "src/**/*.ts",
-    "src/types/**/*.d.ts"  // Incluir todos los archivos .d.ts dentro de src/types
-  ]
+  "include": ["src//", "./api/.ts"],
+  "exclude": ["node_modules","build"]
 }
