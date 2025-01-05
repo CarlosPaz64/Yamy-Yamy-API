@@ -13,7 +13,7 @@ router.use(verifyUserToken);
 // Rutas del carrito
 
 // Crear o obtener un nuevo carrito para el cliente
-router.post('/create', carritoController.createCarrito);
+// router.post('/create', carritoController.createCarrito);
 
 // Ruta para obtener el carrito pendiente del cliente autenticado
 router.get('/pending', carritoController.getPendingCarrito);
@@ -34,7 +34,7 @@ router.patch('/decrement-quantity/:carrito_producto_id', carritoController.reduc
 router.delete('/remove-product/:carrito_producto_id', carritoController.removeProduct);
 
 // Vaciar el carrito completo de un cliente
-router.delete('/clear/:carrito_id', carritoController.clearCarrito);
+// router.delete('/clear/:carrito_id', carritoController.clearCarrito);
 
 // Finalizar el carrito (cambiar estado a "Completado" y ajustar stock)
 router.put('/finalize/:carrito_id', upload.none(), carritoController.finalizeCarrito);
