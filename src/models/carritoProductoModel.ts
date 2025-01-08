@@ -12,7 +12,7 @@ class CarritoProductoModel {
   // Añadir o incrementar un producto en el carrito
   async addOrUpdateProductInCarrito(carritoProducto: CarritoProducto): Promise<{ carrito_producto_id: number }> {
     const { carrito_id, product_id, cantidad } = carritoProducto;
-
+  
     try {
       // Verificar el estado del carrito
       const carritoEstadoQuery = `
@@ -20,43 +20,38 @@ class CarritoProductoModel {
       `;
       const [estadoRows] = await db.execute<RowDataPacket[]>(carritoEstadoQuery, [carrito_id]);
       const carritoEstado = estadoRows[0]?.estado_pago;
-
+  
       if (carritoEstado !== 'Pendiente') {
         throw new Error('No se pueden agregar productos a un carrito finalizado.');
       }
-
+  
+      // Verificar si el producto ya existe en el carrito
       const queryCheck = `
-        SELECT * FROM carrito_producto
+        SELECT carrito_producto_id, cantidad FROM carrito_producto
         WHERE carrito_id = ? AND product_id = ?
       `;
       const [existingRows] = await db.execute<RowDataPacket[]>(queryCheck, [carrito_id, product_id]);
       const existingProduct = existingRows[0] as CarritoProducto | undefined;
-
-      let carrito_producto_id: number;
-
+  
       if (existingProduct) {
-        const queryUpdate = `
-          UPDATE carrito_producto
-          SET cantidad = cantidad + ?
-          WHERE carrito_producto_id = ?
-        `;
-        await db.execute<ResultSetHeader>(queryUpdate, [cantidad, existingProduct.carrito_producto_id]);
-        carrito_producto_id = existingProduct.carrito_producto_id;
-      } else {
-        const queryInsert = `
-          INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
-          VALUES (?, ?, ?)
-        `;
-        const [insertResult] = await db.execute<ResultSetHeader>(queryInsert, [carrito_id, product_id, cantidad]);
-        carrito_producto_id = insertResult.insertId;
+        // Si el producto ya existe, incrementa la cantidad
+        await this.incrementProductQuantity(existingProduct.carrito_producto_id, cantidad);
+        return { carrito_producto_id: existingProduct.carrito_producto_id };
       }
-
-      return { carrito_producto_id };
+  
+      // Si el producto no existe, insértalo en el carrito
+      const queryInsert = `
+        INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
+        VALUES (?, ?, ?)
+      `;
+      const [insertResult] = await db.execute<ResultSetHeader>(queryInsert, [carrito_id, product_id, cantidad]);
+  
+      return { carrito_producto_id: insertResult.insertId };
     } catch (error) {
       console.error('Error en addOrUpdateProductInCarrito:', error);
       throw new Error('Error al añadir o actualizar el producto en el carrito.');
     }
-  }
+  }  
 
   // Ajustar el stock al finalizar la compra
   async ajustarStockAlFinalizar(carrito_id: number): Promise<void> {
