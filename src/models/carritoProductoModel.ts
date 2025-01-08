@@ -27,7 +27,8 @@ class CarritoProductoModel {
   
       // Verificar si el producto ya existe en el carrito
       const queryCheck = `
-        SELECT carrito_producto_id, cantidad FROM carrito_producto
+        SELECT carrito_producto_id, cantidad 
+        FROM carrito_producto 
         WHERE carrito_id = ? AND product_id = ?
       `;
       const [existingRows] = await db.execute<RowDataPacket[]>(queryCheck, [carrito_id, product_id]);
@@ -39,7 +40,7 @@ class CarritoProductoModel {
         return { carrito_producto_id: existingProduct.carrito_producto_id };
       }
   
-      // Si el producto no existe, insértalo en el carrito
+      // Insertar el nuevo producto en el carrito
       const queryInsert = `
         INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
         VALUES (?, ?, ?)
