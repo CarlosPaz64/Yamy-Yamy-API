@@ -25,34 +25,45 @@ class CarritoProductoModel {
         throw new Error('No se pueden agregar productos a un carrito finalizado.');
       }
   
-      // Verificar si el producto ya existe en el carrito
-      const queryCheck = `
-        SELECT carrito_producto_id, cantidad 
-        FROM carrito_producto 
-        WHERE carrito_id = ? AND product_id = ?
-      `;
-      const [existingRows] = await db.execute<RowDataPacket[]>(queryCheck, [carrito_id, product_id]);
-      const existingProduct = existingRows[0] as CarritoProducto | undefined;
-  
-      if (existingProduct) {
-        // Si el producto ya existe, incrementa la cantidad
-        await this.incrementProductQuantity(existingProduct.carrito_producto_id, cantidad);
-        return { carrito_producto_id: existingProduct.carrito_producto_id };
-      }
-  
-      // Insertar el nuevo producto en el carrito
+      // Intentar insertar el producto directamente
       const queryInsert = `
         INSERT INTO carrito_producto (carrito_id, product_id, cantidad)
         VALUES (?, ?, ?)
       `;
-      const [insertResult] = await db.execute<ResultSetHeader>(queryInsert, [carrito_id, product_id, cantidad]);
+      try {
+        const [insertResult] = await db.execute<ResultSetHeader>(queryInsert, [carrito_id, product_id, cantidad]);
+        return { carrito_producto_id: insertResult.insertId };
+      } catch (error: any) {
+        if (error.code === 'ER_DUP_ENTRY') {
+          console.warn(`Producto con ID ${product_id} ya existe en el carrito. Incrementando cantidad...`);
+          // Incrementar la cantidad del producto existente
+          const queryUpdate = `
+            UPDATE carrito_producto
+            SET cantidad = cantidad + ?
+            WHERE carrito_id = ? AND product_id = ?
+          `;
+          await db.execute(queryUpdate, [cantidad, carrito_id, product_id]);
   
-      return { carrito_producto_id: insertResult.insertId };
+          // Obtener el carrito_producto_id actualizado
+          const queryGetId = `
+            SELECT carrito_producto_id
+            FROM carrito_producto
+            WHERE carrito_id = ? AND product_id = ?
+          `;
+          const [rows] = await db.execute<RowDataPacket[]>(queryGetId, [carrito_id, product_id]);
+          const carrito_producto_id = rows[0]?.carrito_producto_id;
+  
+          return { carrito_producto_id };
+        }
+  
+        // Re-lanzar otros errores
+        throw error;
+      }
     } catch (error) {
       console.error('Error en addOrUpdateProductInCarrito:', error);
       throw new Error('Error al añadir o actualizar el producto en el carrito.');
     }
-  }  
+  }
 
   // Ajustar el stock al finalizar la compra
   async ajustarStockAlFinalizar(carrito_id: number): Promise<void> {
